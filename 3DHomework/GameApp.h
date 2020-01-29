@@ -5,7 +5,6 @@
 #include "Camera.h"
 #include "GameObject.h"
 #include "SkyRender.h"
-#include "ObjReader.h"
 class GameApp : public D3DApp
 {
 public:
@@ -46,8 +45,6 @@ private:
 
 	std::shared_ptr<Camera> m_pCamera;						    // 摄像机
 	CameraMode m_CameraMode;									// 摄像机模式
-
-	ObjReader m_ObjReader;									    // 模型读取对象
 };
 
 

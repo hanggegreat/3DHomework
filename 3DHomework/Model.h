@@ -11,7 +11,6 @@
 
 #include <DirectXCollision.h>
 #include "Effects.h"
-#include "ObjReader.h"
 #include "Geometry.h"
 
 struct ModelPart
@@ -46,7 +45,6 @@ struct Model
 	using ComPtr = Microsoft::WRL::ComPtr<T>;
 	
 	Model();
-	Model(ID3D11Device * device, const ObjReader& model);
 	// 设置缓冲区
 	template<class VertexType, class IndexType>
 	Model(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData);
@@ -57,11 +55,6 @@ struct Model
 	
 	Model(ID3D11Device * device, const void* vertices, UINT vertexSize, UINT vertexCount,
 		const void * indices, UINT indexCount, DXGI_FORMAT indexFormat);
-	//
-	// 设置模型
-	//
-
-	void SetModel(ID3D11Device * device, const ObjReader& model);
 
 	//
 	// 设置网格

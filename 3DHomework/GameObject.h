@@ -26,7 +26,6 @@ public:
 	// 获取位置
 	DirectX::XMFLOAT3 GetPosition() const;
 
-
 	//
 	// 设置实例缓冲区
 	//

@@ -63,9 +63,6 @@
     <ClCompile Include="Main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ObjReader.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="RenderStates.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -123,9 +120,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="LightHelper.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjReader.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RenderStates.h">
