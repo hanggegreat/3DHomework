@@ -42,9 +42,6 @@
     <ClCompile Include="Camera.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Collision.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="d3dApp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -66,9 +63,6 @@
     <ClCompile Include="Main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ObjReader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -79,6 +73,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Vertex.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -102,9 +99,6 @@
       <Filter>通用文件</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Collision.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="d3dApp.h">
@@ -131,9 +125,6 @@
     <ClInclude Include="LightHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ObjReader.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -144,6 +135,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

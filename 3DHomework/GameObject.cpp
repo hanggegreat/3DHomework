@@ -24,27 +24,6 @@ XMFLOAT3 GameObject::GetPosition() const
 	return XMFLOAT3(m_WorldMatrix(3, 0), m_WorldMatrix(3, 1), m_WorldMatrix(3, 2));
 }
 
-BoundingBox GameObject::GetBoundingBox() const
-{
-	BoundingBox box;
-	m_Model.boundingBox.Transform(box, XMLoadFloat4x4(&m_WorldMatrix));
-	return box;
-}
-
-BoundingOrientedBox GameObject::GetBoundingOrientedBox() const
-{
-	BoundingOrientedBox box;
-	BoundingOrientedBox::CreateFromBoundingBox(box, m_Model.boundingBox);
-	box.Transform(box, XMLoadFloat4x4(&m_WorldMatrix));
-	return box;
-}
-
-
-BoundingBox GameObject::GetLocalBoundingBox() const
-{
-	return m_Model.boundingBox;
-}
-
 size_t GameObject::GetCapacity() const
 {
 	return m_Capacity;
@@ -73,7 +52,6 @@ void GameObject::SetModel(Model && model)
 {
 	std::swap(m_Model, model);
 	model.modelParts.clear();
-	model.boundingBox = BoundingBox();
 }
 
 void GameObject::SetModel(const Model & model)

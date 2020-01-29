@@ -6,7 +6,6 @@
 #include "GameObject.h"
 #include "SkyRender.h"
 #include "ObjReader.h"
-#include "Collision.h"
 class GameApp : public D3DApp
 {
 public:

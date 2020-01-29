@@ -26,13 +26,6 @@ public:
 	// 获取位置
 	DirectX::XMFLOAT3 GetPosition() const;
 
-	//
-	// 获取包围盒
-	//
-
-	DirectX::BoundingBox GetLocalBoundingBox() const;
-	DirectX::BoundingBox GetBoundingBox() const;
-	DirectX::BoundingOrientedBox GetBoundingOrientedBox() const;
 
 	//
 	// 设置实例缓冲区

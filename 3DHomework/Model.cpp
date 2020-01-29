@@ -5,19 +5,19 @@
 using namespace DirectX;
 
 Model::Model()
-	: modelParts(), boundingBox(), vertexStride()
+	: modelParts(), vertexStride()
 {
 }
 
 Model::Model(ID3D11Device * device, const ObjReader & model)
-	: modelParts(), boundingBox(), vertexStride()
+	: modelParts(), vertexStride()
 {
 	SetModel(device, model);
 }
 
 Model::Model(ID3D11Device * device, const void* vertices, UINT vertexSize, UINT vertexCount,
 	const void * indices, UINT indexCount, DXGI_FORMAT indexFormat)
-	: modelParts(), boundingBox(), vertexStride()
+	: modelParts(), vertexStride()
 {
 	SetMesh(device, vertices, vertexSize, vertexCount, indices, indexCount, indexFormat);
 }
@@ -27,9 +27,6 @@ void Model::SetModel(ID3D11Device * device, const ObjReader & model)
 	vertexStride = sizeof(VertexPosNormalTex);
 
 	modelParts.resize(model.objParts.size());
-
-	// 创建包围盒
-	BoundingBox::CreateFromPoints(boundingBox, XMLoadFloat3(&model.vMin), XMLoadFloat3(&model.vMax));
 
 	for (size_t i = 0; i < model.objParts.size(); ++i)
 	{

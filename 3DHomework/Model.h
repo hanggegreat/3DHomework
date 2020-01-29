@@ -84,7 +84,6 @@ struct Model
 	void SetDebugObjectName(const std::string& name);
 
 	std::vector<ModelPart> modelParts;
-	DirectX::BoundingBox boundingBox;
 	UINT vertexStride;
 };
 
@@ -93,14 +92,14 @@ struct Model
 
 template<class VertexType, class IndexType>
 inline Model::Model(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData)
-	: modelParts(), boundingBox(), vertexStride()
+	: modelParts(), vertexStride()
 {
 	SetMesh(device, meshData);
 }
 
 template<class VertexType, class IndexType>
 inline Model::Model(ID3D11Device * device, const std::vector<VertexType> & vertices, const std::vector<IndexType>& indices)
-	: modelParts(), boundingBox(), vertexStride()
+	: modelParts(), vertexStride()
 {
 	SetMesh(device, vertices, indices);
 }
