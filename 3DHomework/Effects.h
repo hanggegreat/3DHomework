@@ -13,7 +13,6 @@
 #include "LightHelper.h"
 #include "RenderStates.h"
 
-
 class IEffect
 {
 public:
@@ -42,8 +41,6 @@ class BasicEffect : public IEffect
 {
 public:
 
-	enum RenderType { RenderObject, RenderInstance };
-
 	BasicEffect();
 	virtual ~BasicEffect() override;
 
@@ -59,13 +56,29 @@ public:
 	bool InitAll(ID3D11Device * device);
 
 
-	// 
+	//
 	// 渲染模式的变更
 	//
 
 	// 默认状态来绘制
-	void SetRenderDefault(ID3D11DeviceContext * deviceContext, RenderType type);
+	void SetRenderDefault(ID3D11DeviceContext * deviceContext);
+	// Alpha混合绘制
+	void SetRenderAlphaBlend(ID3D11DeviceContext * deviceContext);
+	// 无二次混合
+	void SetRenderNoDoubleBlend(ID3D11DeviceContext * deviceContext, UINT stencilRef);
+	// 仅写入模板值
+	void SetWriteStencilOnly(ID3D11DeviceContext * deviceContext, UINT stencilRef);
+	// 对指定模板值的区域进行绘制，采用默认状态
+	void SetRenderDefaultWithStencil(ID3D11DeviceContext * deviceContext, UINT stencilRef);
+	// 对指定模板值的区域进行绘制，采用Alpha混合
+	void SetRenderAlphaBlendWithStencil(ID3D11DeviceContext * deviceContext, UINT stencilRef);
+	// 2D默认状态绘制
+	void Set2DRenderDefault(ID3D11DeviceContext * deviceContext);
+	// 2D混合绘制
+	void Set2DRenderAlphaBlend(ID3D11DeviceContext * deviceContext);
+
 	
+
 	//
 	// 矩阵设置
 	//
@@ -73,6 +86,10 @@ public:
 	void XM_CALLCONV SetWorldMatrix(DirectX::FXMMATRIX W);
 	void XM_CALLCONV SetViewMatrix(DirectX::FXMMATRIX V);
 	void XM_CALLCONV SetProjMatrix(DirectX::FXMMATRIX P);
+
+	void XM_CALLCONV SetReflectionMatrix(DirectX::FXMMATRIX R);
+	void XM_CALLCONV SetShadowMatrix(DirectX::FXMMATRIX S);
+	void XM_CALLCONV SetRefShadowMatrix(DirectX::FXMMATRIX RefS);
 	
 	//
 	// 光照、材质和纹理相关设置
@@ -87,20 +104,21 @@ public:
 
 	void SetMaterial(const Material& material);
 
+	void SetTexture(ID3D11ShaderResourceView * texture);
 
-	void SetTextureUsed(bool isUsed);
-
-	void SetTextureDiffuse(ID3D11ShaderResourceView * textureDiffuse);
 	void SetTextureCube(ID3D11ShaderResourceView * textureCube);
 
 	void XM_CALLCONV SetEyePos(DirectX::FXMVECTOR eyePos);
-	
+
+
+
 	//
 	// 状态开关设置
 	//
 
-	void SetReflectionEnabled(bool isEnable);
-
+	void SetReflectionState(bool isOn);
+	void SetShadowState(bool isOn);
+	
 
 	// 应用常量缓冲区和纹理资源的变更
 	void Apply(ID3D11DeviceContext * deviceContext);
@@ -109,6 +127,7 @@ private:
 	class Impl;
 	std::unique_ptr<Impl> pImpl;
 };
+
 
 class SkyEffect : IEffect
 {
@@ -138,6 +157,7 @@ public:
 
 	void XM_CALLCONV SetWorldViewProjMatrix(DirectX::FXMMATRIX W, DirectX::CXMMATRIX V, DirectX::CXMMATRIX P);
 	void XM_CALLCONV SetWorldViewProjMatrix(DirectX::FXMMATRIX WVP);
+
 
 	//
 	// 纹理立方体映射设置

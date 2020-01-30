@@ -5,6 +5,8 @@
 #include "Camera.h"
 #include "GameObject.h"
 #include "SkyRender.h"
+
+
 class GameApp : public D3DApp
 {
 public:
@@ -12,7 +14,7 @@ public:
 	enum class CameraMode { FirstPerson, ThirdPerson, Free };
 	// 天空盒模式
 	enum class SkyBoxMode { Daylight, Sunset, Desert };
-
+	
 public:
 	GameApp(HINSTANCE hInstance);
 	~GameApp();
@@ -24,19 +26,23 @@ public:
 
 private:
 	bool InitResource();
-	
+
 private:
 	
 	ComPtr<ID2D1SolidColorBrush> m_pColorBrush;				    // 单色笔刷
 	ComPtr<IDWriteFont> m_pFont;								// 字体
 	ComPtr<IDWriteTextFormat> m_pTextFormat;					// 文本格式
 
-	GameObject m_Sphere;										// 球
-	GameObject m_Ground;										// 地面
-	GameObject m_Cylinder;									    // 圆柱
+	GameObject m_WoodCrate;									    // 木盒
+	GameObject m_Floor;										    // 地板
+	std::vector<GameObject> m_Walls;							// 墙壁
+	GameObject m_Mirror;										// 镜面
+
+	Material m_ShadowMat;									    // 阴影材质
+	Material m_WoodCrateMat;									// 木盒材质
 
 	BasicEffect m_BasicEffect;								    // 对象渲染特效管理
-	
+
 	SkyEffect m_SkyEffect;									    // 天空盒特效管理
 	std::unique_ptr<SkyRender> m_pDaylight;					    // 天空盒(白天)
 	std::unique_ptr<SkyRender> m_pSunset;						// 天空盒(日落)
@@ -45,6 +51,7 @@ private:
 
 	std::shared_ptr<Camera> m_pCamera;						    // 摄像机
 	CameraMode m_CameraMode;									// 摄像机模式
+
 };
 
 

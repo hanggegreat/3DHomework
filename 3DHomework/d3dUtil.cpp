@@ -218,7 +218,7 @@ HRESULT CreateDDSTexture2DArrayFromFile(
 		// 使得CPU可以读取资源
 		hResult = CreateDDSTextureFromFileEx(d3dDevice,
 			fileNames[i].c_str(), 0, D3D11_USAGE_STAGING, 0,
-			D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ,	
+			D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ,
 			0, false, (ID3D11Resource**)&srcTexVec[i], nullptr);
 
 		// 读取失败则释放之前读取的纹理并返回
@@ -247,7 +247,7 @@ HRESULT CreateDDSTexture2DArrayFromFile(
 	hResult = CreateTexture2DArray(d3dDevice, d3dDeviceContext, srcTexVec,
 		D3D11_USAGE_DEFAULT,
 		D3D11_BIND_SHADER_RESOURCE | (generateMips ? D3D11_BIND_RENDER_TARGET : 0),
-		0, 
+		0,
 		(generateMips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0),
 		textureArray,
 		textureArrayView);

@@ -72,9 +72,6 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EffectHelper.h">
@@ -131,9 +128,6 @@
     <ClInclude Include="Vertex.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="HLSL\Basic.hlsli">
@@ -147,19 +141,22 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="HLSL\Basic_PS.hlsl">
-      <Filter>着色器</Filter>
-    </FxCompile>
-    <FxCompile Include="HLSL\BasicInstance_VS.hlsl">
-      <Filter>着色器</Filter>
-    </FxCompile>
-    <FxCompile Include="HLSL\BasicObject_VS.hlsl">
-      <Filter>着色器</Filter>
-    </FxCompile>
     <FxCompile Include="HLSL\Sky_PS.hlsl">
       <Filter>着色器</Filter>
     </FxCompile>
     <FxCompile Include="HLSL\Sky_VS.hlsl">
+      <Filter>着色器</Filter>
+    </FxCompile>
+    <FxCompile Include="HLSL\Basic_PS_2D.hlsl">
+      <Filter>着色器</Filter>
+    </FxCompile>
+    <FxCompile Include="HLSL\Basic_PS_3D.hlsl">
+      <Filter>着色器</Filter>
+    </FxCompile>
+    <FxCompile Include="HLSL\Basic_VS_2D.hlsl">
+      <Filter>着色器</Filter>
+    </FxCompile>
+    <FxCompile Include="HLSL\Basic_VS_3D.hlsl">
       <Filter>着色器</Filter>
     </FxCompile>
   </ItemGroup>
