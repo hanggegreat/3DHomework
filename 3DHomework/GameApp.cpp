@@ -251,54 +251,8 @@ void GameApp::DrawScene()
 	m_pd3dImmediateContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	
-	
 	// ******************
-	// 1. 给镜面反射区域写入值1到模板缓冲区
-	// 
-
-	m_BasicEffect.SetWriteStencilOnly(m_pd3dImmediateContext.Get(), 1);
-	m_Mirror.Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
-
-	// ******************
-	// 2. 绘制不透明的反射物体
-	//
-
-	// 开启反射绘制
-	m_BasicEffect.SetReflectionState(true);
-	m_BasicEffect.SetRenderDefaultWithStencil(m_pd3dImmediateContext.Get(), 1);
-
-	m_Walls[2].Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
-	m_Walls[3].Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
-	m_Walls[4].Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
-	m_Floor.Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
-	m_WoodCrate.Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
-
-	// ******************
-	// 3. 绘制不透明反射物体的阴影
-	//
-
-	m_WoodCrate.SetMaterial(m_ShadowMat);
-	m_BasicEffect.SetShadowState(true);	// 反射开启，阴影开启			
-	m_BasicEffect.SetRenderNoDoubleBlend(m_pd3dImmediateContext.Get(), 1);
-
-	m_WoodCrate.Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
-
-	// 恢复到原来的状态
-	m_BasicEffect.SetShadowState(false);
-	m_WoodCrate.SetMaterial(m_WoodCrateMat);
-	
-	// ******************
-	// 4. 绘制透明镜面
-	//
-
-	// 关闭反射绘制
-	m_BasicEffect.SetReflectionState(false);
-	m_BasicEffect.SetRenderAlphaBlendWithStencil(m_pd3dImmediateContext.Get(), 1);
-
-	m_Mirror.Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
-
-	// ******************
-	// 5. 绘制不透明的正常物体
+	// 1. 绘制物体
 	//
 	m_BasicEffect.SetRenderDefault(m_pd3dImmediateContext.Get());
 
@@ -308,10 +262,10 @@ void GameApp::DrawScene()
 	m_WoodCrate.Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
 
 	// ******************
-	// 6. 绘制不透明正常物体的阴影
+	// 6. 绘制物体的阴影
 	//
 	m_WoodCrate.SetMaterial(m_ShadowMat);
-	m_BasicEffect.SetShadowState(true);	// 反射关闭，阴影开启
+	m_BasicEffect.SetShadowState(true);	// 阴影开启
 	m_BasicEffect.SetRenderNoDoubleBlend(m_pd3dImmediateContext.Get(), 0);
 
 	m_WoodCrate.Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
@@ -420,43 +374,22 @@ bool GameApp::InitResource()
 	m_Floor.SetWorldMatrix(XMMatrixTranslation(0.0f, -1.0f, 0.0f));
 
 	// 初始化墙体
-	m_Walls.resize(5);
+	m_Walls.resize(4);
 	HR(CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\brick.dds", nullptr, texture.ReleaseAndGetAddressOf()));
-	// 这里控制墙体五个面的生成，0和1的中间位置用于放置镜面
-	//     ____     ____
-	//    /| 0 |   | 1 |\
-	//   /4|___|___|___|2\
-	//  /_/_ _ _ _ _ _ _\_\
-	// | /       3       \ |
-	// |/_________________\|
-	//
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
 		m_Walls[i].SetMaterial(material);
 		m_Walls[i].SetTexture(texture.Get());
 	}
-	m_Walls[0].SetBuffer(m_pd3dDevice.Get(), Geometry::CreatePlane(XMFLOAT2(6.0f, 8.0f), XMFLOAT2(1.5f, 2.0f)));
-	m_Walls[1].SetBuffer(m_pd3dDevice.Get(), Geometry::CreatePlane(XMFLOAT2(6.0f, 8.0f), XMFLOAT2(1.5f, 2.0f)));
+	m_Walls[0].SetBuffer(m_pd3dDevice.Get(), Geometry::CreatePlane(XMFLOAT2(20.0f, 8.0f), XMFLOAT2(5.0f, 2.0f)));
+	m_Walls[1].SetBuffer(m_pd3dDevice.Get(), Geometry::CreatePlane(XMFLOAT2(20.0f, 8.0f), XMFLOAT2(5.0f, 2.0f)));
 	m_Walls[2].SetBuffer(m_pd3dDevice.Get(), Geometry::CreatePlane(XMFLOAT2(20.0f, 8.0f), XMFLOAT2(5.0f, 2.0f)));
 	m_Walls[3].SetBuffer(m_pd3dDevice.Get(), Geometry::CreatePlane(XMFLOAT2(20.0f, 8.0f), XMFLOAT2(5.0f, 2.0f)));
-	m_Walls[4].SetBuffer(m_pd3dDevice.Get(), Geometry::CreatePlane(XMFLOAT2(20.0f, 8.0f), XMFLOAT2(5.0f, 2.0f)));
-	
-	m_Walls[0].SetWorldMatrix(XMMatrixRotationX(-XM_PIDIV2) * XMMatrixTranslation(-7.0f, 3.0f, 10.0f));
-	m_Walls[1].SetWorldMatrix(XMMatrixRotationX(-XM_PIDIV2) * XMMatrixTranslation(7.0f, 3.0f, 10.0f));
-	m_Walls[2].SetWorldMatrix(XMMatrixRotationY(-XM_PIDIV2) * XMMatrixRotationZ(XM_PIDIV2) * XMMatrixTranslation(10.0f, 3.0f, 0.0f));
-	m_Walls[3].SetWorldMatrix(XMMatrixRotationX(XM_PIDIV2) * XMMatrixTranslation(0.0f, 3.0f, -10.0f));
-	m_Walls[4].SetWorldMatrix(XMMatrixRotationY(XM_PIDIV2) * XMMatrixRotationZ(-XM_PIDIV2) * XMMatrixTranslation(-10.0f, 3.0f, 0.0f));
 
-	// 初始化镜面
-	material.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	material.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f);
-	material.specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 16.0f);
-	HR(CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\ice.dds", nullptr, texture.ReleaseAndGetAddressOf()));
-	m_Mirror.SetBuffer(m_pd3dDevice.Get(),
-		Geometry::CreatePlane(XMFLOAT2(8.0f, 8.0f), XMFLOAT2(1.0f, 1.0f)));
-	m_Mirror.SetWorldMatrix(XMMatrixRotationX(-XM_PIDIV2) * XMMatrixTranslation(0.0f, 3.0f, 10.0f));
-	m_Mirror.SetTexture(texture.Get());
-	m_Mirror.SetMaterial(material);
+	m_Walls[0].SetWorldMatrix(XMMatrixRotationX(-XM_PIDIV2) * XMMatrixTranslation(0.0f, 3.0f, 10.0f));
+	m_Walls[1].SetWorldMatrix(XMMatrixRotationY(-XM_PIDIV2) * XMMatrixRotationZ(XM_PIDIV2) * XMMatrixTranslation(10.0f, 3.0f, 0.0f));
+	m_Walls[2].SetWorldMatrix(XMMatrixRotationX(XM_PIDIV2) * XMMatrixTranslation(0.0f, 3.0f, -10.0f));
+	m_Walls[3].SetWorldMatrix(XMMatrixRotationY(-XM_PIDIV2) * XMMatrixRotationZ(-XM_PIDIV2) * XMMatrixTranslation(-10.0f, 3.0f, 0.0f));
 
 	// ******************
 	// 初始化摄像机
@@ -505,12 +438,10 @@ bool GameApp::InitResource()
 	// 设置调试对象名
 	//
 	m_Floor.SetDebugObjectName("Floor");
-	m_Mirror.SetDebugObjectName("Mirror");
 	m_Walls[0].SetDebugObjectName("Walls[0]");
 	m_Walls[1].SetDebugObjectName("Walls[1]");
 	m_Walls[2].SetDebugObjectName("Walls[2]");
 	m_Walls[3].SetDebugObjectName("Walls[3]");
-	m_Walls[4].SetDebugObjectName("Walls[4]");
 	m_WoodCrate.SetDebugObjectName("WoodCrate");
 
 	return true;

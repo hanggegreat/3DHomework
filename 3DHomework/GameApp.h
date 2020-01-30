@@ -36,7 +36,6 @@ private:
 	GameObject m_WoodCrate;									    // 木盒
 	GameObject m_Floor;										    // 地板
 	std::vector<GameObject> m_Walls;							// 墙壁
-	GameObject m_Mirror;										// 镜面
 
 	Material m_ShadowMat;									    // 阴影材质
 	Material m_WoodCrateMat;									// 木盒材质
