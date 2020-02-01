@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="特效文件">
-      <UniqueIdentifier>{c3f36c70-8f03-403e-8f70-09ee77191a07}</UniqueIdentifier>
-    </Filter>
     <Filter Include="通用文件">
       <UniqueIdentifier>{ae19e9cc-0d85-4028-9ca5-a4b91980e60e}</UniqueIdentifier>
     </Filter>
@@ -21,12 +18,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BasicEffect.cpp">
-      <Filter>特效文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SkyEffect.cpp">
-      <Filter>特效文件</Filter>
-    </ClCompile>
     <ClCompile Include="DDSTextureLoader.cpp">
       <Filter>通用文件</Filter>
     </ClCompile>
@@ -54,19 +45,10 @@
     <ClCompile Include="GameApp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GameObject.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="GameTimer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderStates.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SkyRender.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Vertex.cpp">
@@ -74,12 +56,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EffectHelper.h">
-      <Filter>特效文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Effects.h">
-      <Filter>特效文件</Filter>
-    </ClInclude>
     <ClInclude Include="DDSTextureLoader.h">
       <Filter>通用文件</Filter>
     </ClInclude>
@@ -107,9 +83,6 @@
     <ClInclude Include="GameApp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GameObject.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="GameTimer.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -119,15 +92,23 @@
     <ClInclude Include="LightHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RenderStates.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SkyRender.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Vertex.h">
       <Filter>头文件</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Texture\daylight.jpg">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Texture\floor.dds">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Texture\brick.dds">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Texture\WoodCrate.dds">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="HLSL\Basic.hlsli">
@@ -136,63 +117,13 @@
     <None Include="HLSL\LightHelper.hlsli">
       <Filter>着色器</Filter>
     </None>
-    <None Include="HLSL\Sky.hlsli">
-      <Filter>着色器</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="HLSL\Sky_PS.hlsl">
+    <FxCompile Include="HLSL\Basic_PS.hlsl">
       <Filter>着色器</Filter>
     </FxCompile>
-    <FxCompile Include="HLSL\Sky_VS.hlsl">
+    <FxCompile Include="HLSL\Basic_VS.hlsl">
       <Filter>着色器</Filter>
     </FxCompile>
-    <FxCompile Include="HLSL\Basic_PS_2D.hlsl">
-      <Filter>着色器</Filter>
-    </FxCompile>
-    <FxCompile Include="HLSL\Basic_PS_3D.hlsl">
-      <Filter>着色器</Filter>
-    </FxCompile>
-    <FxCompile Include="HLSL\Basic_VS_2D.hlsl">
-      <Filter>着色器</Filter>
-    </FxCompile>
-    <FxCompile Include="HLSL\Basic_VS_3D.hlsl">
-      <Filter>着色器</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="Texture\bricks.dds">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\daylight.jpg">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\desertcube1024.dds">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\floor.dds">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\stone.dds">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\sunset_negX.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\sunset_negY.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\sunset_negZ.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\sunset_posX.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\sunset_posY.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Texture\sunset_posZ.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
   </ItemGroup>
 </Project>

@@ -21,7 +21,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 D3DApp::D3DApp(HINSTANCE hInstance)
 	: m_hAppInst(hInstance),
-	m_MainWndCaption(L"Living Without FX11"),
+	m_MainWndCaption(L"Camera"),
 	m_ClientWidth(800),
 	m_ClientHeight(600),
 	m_hMainWnd(nullptr),
@@ -377,7 +377,7 @@ bool D3DApp::InitMainWindow()
 
 	m_hMainWnd = CreateWindow(L"D3DWndClassName", m_MainWndCaption.c_str(),
 		WS_OVERLAPPEDWINDOW, (screenWidth - width) / 2, (screenHeight - height) / 2, width, height, 0, 0, m_hAppInst, 0);
-
+	
 	if (!m_hMainWnd)
 	{
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
@@ -553,7 +553,7 @@ bool D3DApp::InitDirect3D()
 	// 设置调试对象名
 	D3D11SetDebugObjectName(m_pd3dImmediateContext.Get(), "ImmediateContext");
 	DXGISetDebugObjectName(m_pSwapChain.Get(), "SwapChain");
-
+	
 	// 每当窗口被重新调整大小的时候，都需要调用这个OnResize函数。现在调用
 	// 以避免代码重复
 	OnResize();

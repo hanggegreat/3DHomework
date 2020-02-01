@@ -24,56 +24,6 @@ DirectX::XMFLOAT3 Camera::GetPosition() const
 	return m_Position;
 }
 
-DirectX::XMVECTOR Camera::GetRightXM() const
-{
-	return XMLoadFloat3(&m_Right);
-}
-
-DirectX::XMFLOAT3 Camera::GetRight() const
-{
-	return m_Right;
-}
-
-DirectX::XMVECTOR Camera::GetUpXM() const
-{
-	return XMLoadFloat3(&m_Up);
-}
-
-DirectX::XMFLOAT3 Camera::GetUp() const
-{
-	return m_Up;
-}
-
-DirectX::XMVECTOR Camera::GetLookXM() const
-{
-	return XMLoadFloat3(&m_Look);
-}
-
-DirectX::XMFLOAT3 Camera::GetLook() const
-{
-	return m_Look;
-}
-
-float Camera::GetNearWindowWidth() const
-{
-	return m_Aspect * m_NearWindowHeight;
-}
-
-float Camera::GetNearWindowHeight() const
-{
-	return m_NearWindowHeight;
-}
-
-float Camera::GetFarWindowWidth() const
-{
-	return m_Aspect * m_FarWindowHeight;
-}
-
-float Camera::GetFarWindowHeight() const
-{
-	return m_FarWindowHeight;
-}
-
 DirectX::XMMATRIX Camera::GetViewXM() const
 {
 	return XMLoadFloat4x4(&m_View);
@@ -89,11 +39,6 @@ DirectX::XMMATRIX Camera::GetViewProjXM() const
 	return XMLoadFloat4x4(&m_View) * XMLoadFloat4x4(&m_Proj);
 }
 
-D3D11_VIEWPORT Camera::GetViewPort() const
-{
-	return m_ViewPort;
-}
-
 void Camera::SetFrustum(float fovY, float aspect, float nearZ, float farZ)
 {
 	m_FovY = fovY;
@@ -107,11 +52,6 @@ void Camera::SetFrustum(float fovY, float aspect, float nearZ, float farZ)
 	XMStoreFloat4x4(&m_Proj, XMMatrixPerspectiveFovLH(m_FovY, m_Aspect, m_NearZ, m_FarZ));
 }
 
-void Camera::SetViewPort(const D3D11_VIEWPORT & viewPort)
-{
-	m_ViewPort = viewPort;
-}
-
 void Camera::SetViewPort(float topLeftX, float topLeftY, float width, float height, float minDepth, float maxDepth)
 {
 	m_ViewPort.TopLeftX = topLeftX;
@@ -123,10 +63,7 @@ void Camera::SetViewPort(float topLeftX, float topLeftY, float width, float heig
 }
 
 
-// ******************
-// 第一人称/自由视角摄像机
-//
-
+// 第一人称摄像机
 FirstPersonCamera::FirstPersonCamera()
 	: Camera()
 {
@@ -138,12 +75,7 @@ FirstPersonCamera::~FirstPersonCamera()
 
 void FirstPersonCamera::SetPosition(float x, float y, float z)
 {
-	SetPosition(XMFLOAT3(x, y, z));
-}
-
-void FirstPersonCamera::SetPosition(const DirectX::XMFLOAT3 & v)
-{
-	m_Position = v;
+	m_Position = XMFLOAT3(x, y, z);
 }
 
 void XM_CALLCONV FirstPersonCamera::LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR up)
@@ -171,35 +103,6 @@ void XM_CALLCONV FirstPersonCamera::LookTo(DirectX::FXMVECTOR pos, DirectX::FXMV
 void FirstPersonCamera::LookTo(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & to, const DirectX::XMFLOAT3 & up)
 {
 	LookTo(XMLoadFloat3(&pos), XMLoadFloat3(&to), XMLoadFloat3(&up));
-}
-
-void FirstPersonCamera::Strafe(float d)
-{
-	XMVECTOR Pos = XMLoadFloat3(&m_Position);
-	XMVECTOR Right = XMLoadFloat3(&m_Right);
-	XMVECTOR Dist = XMVectorReplicate(d);
-	// DestPos = Dist * Right + SrcPos
-	XMStoreFloat3(&m_Position, XMVectorMultiplyAdd(Dist, Right, Pos));
-}
-
-void FirstPersonCamera::Walk(float d)
-{
-	XMVECTOR Pos = XMLoadFloat3(&m_Position);
-	XMVECTOR Right = XMLoadFloat3(&m_Right);
-	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMVECTOR Front = XMVector3Normalize(XMVector3Cross(Right, Up));
-	XMVECTOR Dist = XMVectorReplicate(d);
-	// DestPos = Dist * Front + SrcPos
-	XMStoreFloat3(&m_Position, XMVectorMultiplyAdd(Dist, Front, Pos));
-}
-
-void FirstPersonCamera::MoveForward(float d)
-{
-	XMVECTOR Pos = XMLoadFloat3(&m_Position);
-	XMVECTOR Look = XMLoadFloat3(&m_Look);
-	XMVECTOR Dist = XMVectorReplicate(d);
-	// DestPos = Dist * Look + SrcPos
-	XMStoreFloat3(&m_Position, XMVectorMultiplyAdd(Dist, Look, Pos));
 }
 
 void FirstPersonCamera::Pitch(float rad)
@@ -257,37 +160,14 @@ void FirstPersonCamera::UpdateViewMatrix()
 	};
 }
 
-// ******************
 // 第三人称摄像机
-//
-
 ThirdPersonCamera::ThirdPersonCamera()
-	: Camera(), m_Target(), m_Distance(), m_MinDist(), m_MaxDist(), m_Theta(), m_Phi()
+	: Camera(), m_Target(), m_Distance(), m_MinDist(), m_MaxDist(), m_Theta(-XM_PIDIV2), m_Phi()
 {
 }
 
 ThirdPersonCamera::~ThirdPersonCamera()
 {
-}
-
-DirectX::XMFLOAT3 ThirdPersonCamera::GetTargetPosition() const
-{
-	return m_Target;
-}
-
-float ThirdPersonCamera::GetDistance() const
-{
-	return m_Distance;
-}
-
-float ThirdPersonCamera::GetRotationX() const
-{
-	return m_Phi;
-}
-
-float ThirdPersonCamera::GetRotationY() const
-{
-	return m_Theta;
 }
 
 void ThirdPersonCamera::RotateX(float rad)
