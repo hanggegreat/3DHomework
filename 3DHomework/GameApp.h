@@ -43,9 +43,9 @@ public:
 		float pad;		// 打包保证16字节对齐
 	};
 
-	struct CBSkyBoxChangesRarely
+	struct CBSkyBoxChangesEveryDrawing
 	{
-		DirectX::XMMATRIX g_WorldViewProj;
+		DirectX::XMMATRIX worldViewProj;
 	};
 
 	// 一个尽可能小的游戏对象类
@@ -67,8 +67,10 @@ public:
 		void SetTexture(ID3D11ShaderResourceView * texture);
 		// 设置矩阵
 		void SetWorldMatrix(const DirectX::XMFLOAT4X4& world);
-		DirectX::XMFLOAT4X4 GetWorldMatrix() const;
 		void XM_CALLCONV SetWorldMatrix(DirectX::FXMMATRIX world);
+
+		DirectX::XMFLOAT4X4 GetWorldMatrix() const;
+
 		// 绘制
 		void Draw(ID3D11DeviceContext * deviceContext, GameApp * gameApp);
 
@@ -85,6 +87,33 @@ public:
 		UINT m_VertexStride;								// 顶点字节大小
 		UINT m_IndexCount;								    // 索引数目
 		bool m_IsShadow;									// 当前是否为阴影
+	};
+
+	// 一个尽可能小的天空盒对象类
+	class SkyBox
+	{
+	public:
+		SkyBox();
+
+		// 设置缓冲区
+		template<class VertexType, class IndexType>
+		void SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData);
+		// 设置纹理
+		void SetTextureCube(ID3D11ShaderResourceView * texture);
+		void XM_CALLCONV SetWorldViewProjMatrix(DirectX::FXMMATRIX WVP);
+		// 绘制
+		void Draw(ID3D11DeviceContext * deviceContext, GameApp *gameApp, Camera & camera);
+
+		// 设置调试对象名
+		// 若缓冲区被重新设置，调试对象名也需要被重新设置
+		void SetDebugObjectName(const std::string& name);
+	private:
+		DirectX::XMFLOAT4X4 m_worldViewProj;
+		ComPtr<ID3D11ShaderResourceView> m_pTextureCube;    // 纹理
+		ComPtr<ID3D11Buffer> m_pVertexBuffer;				// 顶点缓冲区
+		ComPtr<ID3D11Buffer> m_pIndexBuffer;				// 索引缓冲区
+		UINT m_VertexStride;								// 顶点字节大小
+		UINT m_IndexCount;								    // 索引数目	
 	};
 
 	// 摄像机模式
@@ -117,7 +146,7 @@ private:
 	ComPtr<ID3D11InputLayout> m_pVertexLayoutSkyBox;		    // 用于SkyBox的顶点输入布局
 
 
-	ComPtr<ID3D11Buffer> m_pConstantBuffers[4];				    // 常量缓冲区
+	ComPtr<ID3D11Buffer> m_pConstantBuffers[5];				    // 常量缓冲区
 
 	Material m_ShadowMat;									    // 阴影材质
 	Material m_WoodCrateMat;									// 木盒材质
@@ -126,6 +155,8 @@ private:
 	GameObject m_Wheels[2];									    // 前后轮
 	GameObject m_Floor;										    // 地板
 	std::vector<GameObject> m_Walls;							// 墙壁
+
+	SkyBox m_SkyBox;											// 天空盒
 
 	ComPtr<ID3D11VertexShader> m_pVertexShader3D;				// 用于3D的顶点着色器
 	ComPtr<ID3D11VertexShader> m_pVertexShaderSkyBox;			// 用于SkyBox的顶点着色器

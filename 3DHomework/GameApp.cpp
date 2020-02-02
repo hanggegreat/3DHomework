@@ -190,6 +190,8 @@ void GameApp::DrawScene()
 	m_Body.SetShadowState(true);
 	m_Body.Draw(m_pd3dImmediateContext.Get(), this);
 	m_Body.SetShadowState(false);
+	
+	m_SkyBox.Draw(m_pd3dImmediateContext.Get(), this, *m_pCamera);
 
 	// 绘制Direct2D部分
 	if (m_pd2dRenderTarget != nullptr)
@@ -215,6 +217,17 @@ void GameApp::DrawScene()
 bool GameApp::InitEffect()
 {
 	ComPtr<ID3DBlob> blob;
+
+	// 创建顶点着色器(天空盒)
+	HR(CreateShaderFromFile(L"HLSL\\Sky_VS.cso", L"HLSL\\Sky_VS.hlsl", "VS", "vs_5_0", blob.ReleaseAndGetAddressOf()));
+	HR(m_pd3dDevice->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, m_pVertexShaderSkyBox.GetAddressOf()));
+	// 创建顶点布局(天空盒)
+	HR(m_pd3dDevice->CreateInputLayout(VertexPos::inputLayout, ARRAYSIZE(VertexPos::inputLayout),
+		blob->GetBufferPointer(), blob->GetBufferSize(), m_pVertexLayoutSkyBox.GetAddressOf()));
+	// 创建像素着色器(天空盒)
+	HR(CreateShaderFromFile(L"HLSL\\Sky_PS.cso", L"HLSL\\Sky_PS.hlsl", "PS", "ps_5_0", blob.ReleaseAndGetAddressOf()));
+	HR(m_pd3dDevice->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, m_pPixelShaderSkyBox.GetAddressOf()));
+
 
 	// 创建顶点着色器(3D)
 	HR(CreateShaderFromFile(L"HLSL\\Basic_VS.cso", L"HLSL\\Basic_VS.hlsl", "VS", "vs_5_0", blob.ReleaseAndGetAddressOf()));
@@ -247,17 +260,26 @@ bool GameApp::InitResource()
 	HR(m_pd3dDevice->CreateBuffer(&cbd, nullptr, m_pConstantBuffers[2].GetAddressOf()));
 	cbd.ByteWidth = sizeof(CBChangesRarely);
 	HR(m_pd3dDevice->CreateBuffer(&cbd, nullptr, m_pConstantBuffers[3].GetAddressOf()));
+	cbd.ByteWidth = sizeof(CBSkyBoxChangesEveryDrawing);
+	HR(m_pd3dDevice->CreateBuffer(&cbd, nullptr, m_pConstantBuffers[4].GetAddressOf()));
 	
 	// ******************
 	// 初始化游戏对象
-	ComPtr<ID3D11ShaderResourceView> texture;
+
 	m_WoodCrateMat.ambient = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
 	m_WoodCrateMat.diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	m_WoodCrateMat.specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 16.0f);
-	
+
 	m_ShadowMat.ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	m_ShadowMat.diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.5f);
 	m_ShadowMat.specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 16.0f);
+
+	ComPtr<ID3D11ShaderResourceView> texture;
+	// 初始化天空盒
+	HR(CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\sky.dds", nullptr, texture.GetAddressOf()));
+	m_SkyBox.SetBuffer(m_pd3dDevice.Get(), Geometry::CreateSphere<VertexPos>(5000.0f));
+	m_SkyBox.SetTextureCube(texture.Get());
+
 	// 初始化木箱
 	HR(CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\WoodCrate.dds", nullptr, texture.GetAddressOf()));
 	m_Body.SetBuffer(m_pd3dDevice.Get(), Geometry::CreateCylinder());
@@ -335,6 +357,7 @@ bool GameApp::InitResource()
 	m_pd3dImmediateContext->VSSetConstantBuffers(1, 1, m_pConstantBuffers[1].GetAddressOf());
 	m_pd3dImmediateContext->VSSetConstantBuffers(2, 1, m_pConstantBuffers[2].GetAddressOf());
 	m_pd3dImmediateContext->VSSetConstantBuffers(3, 1, m_pConstantBuffers[3].GetAddressOf());
+	m_pd3dImmediateContext->VSSetConstantBuffers(4, 1, m_pConstantBuffers[4].GetAddressOf());
 
 	m_pd3dImmediateContext->PSSetConstantBuffers(0, 1, m_pConstantBuffers[0].GetAddressOf());
 	m_pd3dImmediateContext->PSSetConstantBuffers(1, 1, m_pConstantBuffers[1].GetAddressOf());
@@ -357,6 +380,10 @@ bool GameApp::InitResource()
 	m_Walls[1].SetDebugObjectName("Walls[1]");
 	m_Walls[2].SetDebugObjectName("Walls[2]");
 	m_Walls[3].SetDebugObjectName("Walls[3]");
+	D3D11SetDebugObjectName(m_pVertexLayoutSkyBox.Get(), "SkyEffect.VertexPosTexLayout");
+	D3D11SetDebugObjectName(m_pConstantBuffers[4].Get(), "SkyEffect.CBFrame");
+	D3D11SetDebugObjectName(m_pVertexShaderSkyBox.Get(), "SkyEffect.Sky_VS");
+	D3D11SetDebugObjectName(m_pPixelShaderSkyBox.Get(), "SkyEffect.Sky_PS");
 
 
 	return true;
@@ -522,4 +549,99 @@ void GameApp::GameObject::SetDebugObjectName(const std::string& name)
 #else
 	UNREFERENCED_PARAMETER(name);
 #endif
+}
+
+GameApp::SkyBox::SkyBox() : m_VertexStride(), m_IndexCount()
+{
+}
+
+void GameApp::SkyBox::SetTextureCube(ID3D11ShaderResourceView * textureCube)
+{
+	m_pTextureCube = textureCube;
+}
+
+void XM_CALLCONV GameApp::SkyBox::SetWorldViewProjMatrix(DirectX::FXMMATRIX WVP)
+{
+	XMStoreFloat4x4(&m_worldViewProj, WVP);
+}
+
+void GameApp::SkyBox::Draw(ID3D11DeviceContext * deviceContext, GameApp * gameApp, Camera & camera)
+{
+	// 设置顶点/索引缓冲区
+	UINT strides = sizeof(XMFLOAT3);
+	UINT offsets = 0;
+
+	gameApp->SetSkyBoxRender();
+
+	deviceContext->IASetVertexBuffers(0, 1, m_pVertexBuffer.GetAddressOf(), &strides, &offsets);
+	deviceContext->IASetIndexBuffer(m_pIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+	XMFLOAT3 pos = camera.GetPosition();
+	SetWorldViewProjMatrix(XMMatrixTranslation(pos.x, pos.y, pos.z) * camera.GetViewProjXM());
+	SetTextureCube(m_pTextureCube.Get());
+
+	// 获取之前已经绑定到渲染管线上的常量缓冲区并进行修改
+	ComPtr<ID3D11Buffer> cBuffer = nullptr;
+	deviceContext->VSGetConstantBuffers(0, 1, cBuffer.GetAddressOf());
+	CBSkyBoxChangesEveryDrawing cbDrawing;
+
+	// 内部进行转置，这样外部就不需要提前转置了
+	XMMATRIX WVP = XMLoadFloat4x4(&m_worldViewProj);
+	cbDrawing.worldViewProj = XMMatrixTranspose(WVP);
+
+	// 更新常量缓冲区
+	D3D11_MAPPED_SUBRESOURCE mappedData;
+	HR(deviceContext->Map(cBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData));
+	memcpy_s(mappedData.pData, sizeof(CBChangesEveryDrawing), &cbDrawing, sizeof(CBChangesEveryDrawing));
+	deviceContext->Unmap(cBuffer.Get(), 0);
+
+	// 设置纹理
+	deviceContext->PSSetShaderResources(1, 1, m_pTextureCube.GetAddressOf());
+	// 可以开始绘制
+	deviceContext->DrawIndexed(m_IndexCount, 0, 0);
+}
+
+void GameApp::SkyBox::SetDebugObjectName(const std::string & name)
+{
+#if (defined(DEBUG) || defined(_DEBUG)) && (GRAPHICS_DEBUGGER_OBJECT_NAME)
+	D3D11SetDebugObjectName(m_pVertexBuffer.Get(), name + ".VertexBuffer");
+	D3D11SetDebugObjectName(m_pIndexBuffer.Get(), name + ".IndexBuffer");
+#else
+	UNREFERENCED_PARAMETER(name);
+#endif
+}
+
+template<class VertexType, class IndexType>
+void GameApp::SkyBox::SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData)
+{
+	// 释放旧资源
+	m_pVertexBuffer.Reset();
+	m_pIndexBuffer.Reset();
+
+	// 设置顶点缓冲区描述
+	m_VertexStride = sizeof(VertexType);
+	D3D11_BUFFER_DESC vbd;
+	ZeroMemory(&vbd, sizeof(vbd));
+	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth = (UINT)meshData.vertexVec.size() * m_VertexStride;
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+	// 新建顶点缓冲区
+	D3D11_SUBRESOURCE_DATA InitData;
+	ZeroMemory(&InitData, sizeof(InitData));
+	InitData.pSysMem = meshData.vertexVec.data();
+	HR(device->CreateBuffer(&vbd, &InitData, m_pVertexBuffer.GetAddressOf()));
+
+
+	// 设置索引缓冲区描述
+	m_IndexCount = (UINT)meshData.indexVec.size();
+	D3D11_BUFFER_DESC ibd;
+	ZeroMemory(&ibd, sizeof(ibd));
+	ibd.Usage = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth = m_IndexCount * sizeof(IndexType);
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags = 0;
+	// 新建索引缓冲区
+	InitData.pSysMem = meshData.indexVec.data();
+	HR(device->CreateBuffer(&ibd, &InitData, m_pIndexBuffer.GetAddressOf()));
 }
