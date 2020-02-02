@@ -1,6 +1,5 @@
 #include "d3dApp.h"
 #include "d3dUtil.h"
-#include "DXTrace.h"
 #include <sstream>
 
 namespace
@@ -138,12 +137,9 @@ void D3DApp::OnResize()
 
 	// 重设交换链并且重新创建渲染目标视图
 	ComPtr<ID3D11Texture2D> backBuffer;
-	HR(m_pSwapChain->ResizeBuffers(1, m_ClientWidth, m_ClientHeight, DXGI_FORMAT_B8G8R8A8_UNORM, 0));	// 注意此处DXGI_FORMAT_B8G8R8A8_UNORM
-	HR(m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(backBuffer.GetAddressOf())));
-	HR(m_pd3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, m_pRenderTargetView.GetAddressOf()));
-	
-	// 设置调试对象名
-	D3D11SetDebugObjectName(backBuffer.Get(), "BackBuffer[0]");
+	m_pSwapChain->ResizeBuffers(1, m_ClientWidth, m_ClientHeight, DXGI_FORMAT_B8G8R8A8_UNORM, 0);	// 注意此处DXGI_FORMAT_B8G8R8A8_UNORM
+	m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(backBuffer.GetAddressOf()));
+	m_pd3dDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, m_pRenderTargetView.GetAddressOf());
 	
 	backBuffer.Reset();
 
@@ -175,8 +171,8 @@ void D3DApp::OnResize()
 	depthStencilDesc.MiscFlags = 0;
 
 	// 创建深度缓冲区以及深度模板视图
-	HR(m_pd3dDevice->CreateTexture2D(&depthStencilDesc, nullptr, m_pDepthStencilBuffer.GetAddressOf()));
-	HR(m_pd3dDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), nullptr, m_pDepthStencilView.GetAddressOf()));
+	m_pd3dDevice->CreateTexture2D(&depthStencilDesc, nullptr, m_pDepthStencilBuffer.GetAddressOf());
+	m_pd3dDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), nullptr, m_pDepthStencilView.GetAddressOf());
 
 
 	// 将渲染目标视图和深度/模板缓冲区结合到管线
@@ -191,12 +187,6 @@ void D3DApp::OnResize()
 	m_ScreenViewport.MaxDepth = 1.0f;
 
 	m_pd3dImmediateContext->RSSetViewports(1, &m_ScreenViewport);
-	
-	// 设置调试对象名
-	D3D11SetDebugObjectName(m_pDepthStencilBuffer.Get(), "DepthStencilBuffer");
-	D3D11SetDebugObjectName(m_pDepthStencilView.Get(), "DepthStencilView");
-	D3D11SetDebugObjectName(m_pRenderTargetView.Get(), "BackBufferRTV[0]");
-	
 }
 
 LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -392,9 +382,9 @@ bool D3DApp::InitMainWindow()
 
 bool D3DApp::InitDirect2D()
 {
-	HR(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, m_pd2dFactory.GetAddressOf()));
-	HR(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
-		reinterpret_cast<IUnknown**>(m_pdwriteFactory.GetAddressOf())));
+	D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, m_pd2dFactory.GetAddressOf());
+	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
+		reinterpret_cast<IUnknown**>(m_pdwriteFactory.GetAddressOf()));
 
 	return true;
 }
@@ -472,17 +462,17 @@ bool D3DApp::InitDirect3D()
 	
 	// 为了正确创建 DXGI交换链，首先我们需要获取创建 D3D设备 的 DXGI工厂，否则会引发报错：
 	// "IDXGIFactory::CreateSwapChain: This function is being called with a device from a different IDXGIFactory."
-	HR(m_pd3dDevice.As(&dxgiDevice));
-	HR(dxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf()));
-	HR(dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(dxgiFactory1.GetAddressOf())));
+	m_pd3dDevice.As(&dxgiDevice);
+	dxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf());
+	dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(dxgiFactory1.GetAddressOf()));
 	
 	// 查看该对象是否包含IDXGIFactory2接口
 	hr = dxgiFactory1.As(&dxgiFactory2);
 	// 如果包含，则说明支持D3D11.1
 	if (dxgiFactory2 != nullptr)
 	{
-		HR(m_pd3dDevice.As(&m_pd3dDevice1));
-		HR(m_pd3dImmediateContext.As(&m_pd3dImmediateContext1));
+		m_pd3dDevice.As(&m_pd3dDevice1);
+		m_pd3dImmediateContext.As(&m_pd3dImmediateContext1);
 		// 填充各种结构体用以描述交换链
 		DXGI_SWAP_CHAIN_DESC1 sd;
 		ZeroMemory(&sd, sizeof(sd));
@@ -512,8 +502,8 @@ bool D3DApp::InitDirect3D()
 		fd.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		fd.Windowed = TRUE;
 		// 为当前窗口创建交换链
-		HR(dxgiFactory2->CreateSwapChainForHwnd(m_pd3dDevice.Get(), m_hMainWnd, &sd, &fd, nullptr, m_pSwapChain1.GetAddressOf()));
-		HR(m_pSwapChain1.As(&m_pSwapChain));
+		dxgiFactory2->CreateSwapChainForHwnd(m_pd3dDevice.Get(), m_hMainWnd, &sd, &fd, nullptr, m_pSwapChain1.GetAddressOf());
+		m_pSwapChain1.As(&m_pSwapChain);
 	}
 	else
 	{
@@ -544,16 +534,12 @@ bool D3DApp::InitDirect3D()
 		sd.Windowed = TRUE;
 		sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 		sd.Flags = 0;
-		HR(dxgiFactory1->CreateSwapChain(m_pd3dDevice.Get(), &sd, m_pSwapChain.GetAddressOf()));
+		dxgiFactory1->CreateSwapChain(m_pd3dDevice.Get(), &sd, m_pSwapChain.GetAddressOf());
 	}
 	
 	// 可以禁止alt+enter全屏
 	dxgiFactory1->MakeWindowAssociation(m_hMainWnd, DXGI_MWA_NO_ALT_ENTER | DXGI_MWA_NO_WINDOW_CHANGES);
 
-	// 设置调试对象名
-	D3D11SetDebugObjectName(m_pd3dImmediateContext.Get(), "ImmediateContext");
-	DXGISetDebugObjectName(m_pSwapChain.Get(), "SwapChain");
-	
 	// 每当窗口被重新调整大小的时候，都需要调用这个OnResize函数。现在调用
 	// 以避免代码重复
 	OnResize();

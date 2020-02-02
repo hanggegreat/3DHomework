@@ -1,6 +1,5 @@
 #include "RenderStates.h"
 #include "d3dUtil.h"
-#include "DXTrace.h"
 using namespace Microsoft::WRL;
 
 ComPtr<ID3D11RasterizerState> RenderStates::RSNoCull = nullptr;
@@ -35,7 +34,7 @@ void RenderStates::InitAll(ID3D11Device * device)
 	rasterizerDesc.CullMode = D3D11_CULL_NONE;
 	rasterizerDesc.FrontCounterClockwise = false;
 	rasterizerDesc.DepthClipEnable = true;
-	HR(device->CreateRasterizerState(&rasterizerDesc, RSNoCull.GetAddressOf()));
+	device->CreateRasterizerState(&rasterizerDesc, RSNoCull.GetAddressOf());
 
 	// ******************
 	// 初始化采样器状态
@@ -51,7 +50,7 @@ void RenderStates::InitAll(ID3D11Device * device)
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	HR(device->CreateSamplerState(&sampDesc, SSLinearWrap.GetAddressOf()));
+	device->CreateSamplerState(&sampDesc, SSLinearWrap.GetAddressOf());
 
 	// 各向异性过滤模式
 	sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
@@ -62,7 +61,7 @@ void RenderStates::InitAll(ID3D11Device * device)
 	sampDesc.MaxAnisotropy = 4;
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	HR(device->CreateSamplerState(&sampDesc, SSAnistropicWrap.GetAddressOf()));
+	device->CreateSamplerState(&sampDesc, SSAnistropicWrap.GetAddressOf());
 
 	// ******************
 	// 初始化混合状态
@@ -84,7 +83,7 @@ void RenderStates::InitAll(ID3D11Device * device)
 	rtDesc.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 	rtDesc.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-	HR(device->CreateBlendState(&blendDesc, BSTransparent.GetAddressOf()));
+	device->CreateBlendState(&blendDesc, BSTransparent.GetAddressOf());
 
 	// ******************
 	// 初始化深度/模板状态
@@ -99,7 +98,7 @@ void RenderStates::InitAll(ID3D11Device * device)
 
 	dsDesc.StencilEnable = false;
 
-	HR(device->CreateDepthStencilState(&dsDesc, DSSLessEqual.GetAddressOf()));
+	device->CreateDepthStencilState(&dsDesc, DSSLessEqual.GetAddressOf());
 
 	// 无二次混合深度/模板状态
 	// 允许默认深度测试
@@ -122,18 +121,6 @@ void RenderStates::InitAll(ID3D11Device * device)
 	dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_INCR;
 	dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_EQUAL;
 
-	HR(device->CreateDepthStencilState(&dsDesc, DSSNoDoubleBlend.GetAddressOf()));
+	device->CreateDepthStencilState(&dsDesc, DSSNoDoubleBlend.GetAddressOf());
 
-	// ******************
-	// 设置调试对象名
-	//
-	D3D11SetDebugObjectName(RSNoCull.Get(), "RSNoCull");
-
-	D3D11SetDebugObjectName(SSAnistropicWrap.Get(), "SSAnistropicWrap");
-	D3D11SetDebugObjectName(SSLinearWrap.Get(), "SSLinearWrap");
-
-	D3D11SetDebugObjectName(BSTransparent.Get(), "BSTransparent");
-
-	D3D11SetDebugObjectName(DSSLessEqual.Get(), "DSSLessEqual");
-	D3D11SetDebugObjectName(DSSNoDoubleBlend.Get(), "DSSNoDoubleBlend");
 }

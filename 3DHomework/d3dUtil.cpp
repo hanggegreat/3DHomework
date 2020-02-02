@@ -29,15 +29,6 @@ HRESULT CreateShaderFromFile(
 		ID3DBlob* errorBlob = nullptr;
 		hr = D3DCompileFromFile(hlslFileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint, shaderModel,
 			dwShaderFlags, 0, ppBlobOut, &errorBlob);
-		if (FAILED(hr))
-		{
-			if (errorBlob != nullptr)
-			{
-				OutputDebugStringA(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
-			}
-			SAFE_RELEASE(errorBlob);
-			return hr;
-		}
 
 		// 若指定了输出文件名，则将着色器二进制信息输出
 		if (csoFileNameInOut)
