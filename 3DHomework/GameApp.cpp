@@ -106,9 +106,58 @@ void GameApp::UpdateScene(float dt)
 	auto cam1st = std::dynamic_pointer_cast<FirstPersonCamera>(m_pCamera);
 	auto cam3rd = std::dynamic_pointer_cast<ThirdPersonCamera>(m_pCamera);
 
-	
+	static float theta = 0.0f;
+	static float length = 0.0f;
+	static float velocity = 0.0f;
+
+	float frontWheelTheta = 0.0f;
+	if (keyState.IsKeyDown(Keyboard::A)) {
+		theta -= dt;
+		frontWheelTheta -= 0.3f;
+	}
+	if (keyState.IsKeyDown(Keyboard::D)) {
+		theta += dt;
+		frontWheelTheta += 0.3f;
+	}
+	if (m_KeyboardTracker.IsKeyPressed(Keyboard::W)) {
+		velocity = velocity < -0.5f ? 0.0f : 1.5f;
+	}
+	if (m_KeyboardTracker.IsKeyPressed(Keyboard::S)) {
+		velocity = velocity > 0.5f ? 0.0f : -1.5f;
+	}
+
+	frontWheelTheta += theta;
+	XMFLOAT3 bodyPos = m_Body.GetPosition();
+	float move = velocity * dt;
+	float moveX = move * sin(theta);
+	float moveZ = move * cos(theta);
+	XMFLOAT3 frontWheelNormal(-cos(frontWheelTheta), 0.0f, sin(frontWheelTheta));
+	XMFLOAT3 backWheelNormal(-cos(theta), 0.0f, sin(theta));
+
+	length += move;
+
+	m_Body.SetWorldMatrix(
+		XMMatrixRotationY(theta)
+		* XMMatrixTranslation(bodyPos.x + moveX, bodyPos.y, bodyPos.z + moveZ)
+		);
+	m_Wheels[0].SetWorldMatrix(
+		XMMatrixRotationZ(XM_PIDIV2)
+		* XMMatrixRotationY(frontWheelTheta)
+		* XMMatrixRotationNormal(XMLoadFloat3(&frontWheelNormal), length)
+		* XMMatrixTranslation(bodyPos.x + moveX + sin(theta), -0.49f, bodyPos.z + moveZ + cos(theta))
+	);
+	m_Wheels[1].SetWorldMatrix(
+		XMMatrixRotationZ(XM_PIDIV2)
+		* XMMatrixRotationY(theta)
+		* XMMatrixRotationNormal(XMLoadFloat3(&backWheelNormal), length)
+		* XMMatrixTranslation(bodyPos.x + moveX - sin(theta), -0.49f, bodyPos.z + moveZ - cos(theta))
+	);
+
 	if (m_CameraMode == CameraMode::FirstPerson)
 	{
+		bodyPos = m_Body.GetPosition();
+		cam1st->SetPosition(bodyPos.x - 4 * sin(theta), 4.0f, bodyPos.z - 4 * cos(theta));
+
 		// 视野旋转，防止开始的差值过大导致的突然旋转
 		cam1st->Pitch(mouseState.y * dt * 1.25f);
 		cam1st->RotateY(mouseState.x * dt * 1.25f);
@@ -142,7 +191,8 @@ void GameApp::UpdateScene(float dt)
 			m_pCamera = cam1st;
 		}
 
-		cam1st->LookTo(m_Body.GetPosition(),
+		bodyPos = m_Body.GetPosition();
+		cam1st->LookAt(XMFLOAT3(bodyPos.x - 3 * sin(theta), 3.0f, bodyPos.z - 3 * cos(theta)),
 			XMFLOAT3(0.0f, 0.0f, 1.0f),
 			XMFLOAT3(0.0f, 1.0f, 0.0f));
 
@@ -183,13 +233,23 @@ void GameApp::DrawScene()
 
 	// 绘制几何模型
 	m_Body.Draw(m_pd3dImmediateContext.Get(), this);
+	m_Wheels[0].Draw(m_pd3dImmediateContext.Get(), this);
+	m_Wheels[1].Draw(m_pd3dImmediateContext.Get(), this);
 	m_Floor.Draw(m_pd3dImmediateContext.Get(), this);
 	for (auto& wall : m_Walls)
 		wall.Draw(m_pd3dImmediateContext.Get(), this);
 
 	m_Body.SetShadowState(true);
+	m_Wheels[0].SetShadowState(true);
+	m_Wheels[1].SetShadowState(true);
+	
 	m_Body.Draw(m_pd3dImmediateContext.Get(), this);
+	m_Wheels[0].Draw(m_pd3dImmediateContext.Get(), this);
+	m_Wheels[1].Draw(m_pd3dImmediateContext.Get(), this);
+
 	m_Body.SetShadowState(false);
+	m_Wheels[0].SetShadowState(false);
+	m_Wheels[1].SetShadowState(false);
 	
 	m_SkyBox.Draw(m_pd3dImmediateContext.Get(), this, *m_pCamera);
 
@@ -202,7 +262,7 @@ void GameApp::DrawScene()
 			L"鼠标移动控制视野 滚轮控制第三人称观察距离\n"
 			L"当前模式: ";
 		if (m_CameraMode == CameraMode::FirstPerson)
-			text += L"第一人称(控制箱子移动)";
+			text += L"第一人称";
 		else if (m_CameraMode == CameraMode::ThirdPerson)
 			text += L"第三人称";
 		m_pd2dRenderTarget->DrawTextW(text.c_str(), (UINT32)text.length(), m_pTextFormat.Get(),
@@ -280,11 +340,18 @@ bool GameApp::InitResource()
 	m_SkyBox.SetBuffer(m_pd3dDevice.Get(), Geometry::CreateSphere<VertexPos>(5000.0f));
 	m_SkyBox.SetTextureCube(texture.Get());
 
-	// 初始化木箱
+	// 初始化车身
 	HR(CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\WoodCrate.dds", nullptr, texture.GetAddressOf()));
-	m_Body.SetBuffer(m_pd3dDevice.Get(), Geometry::CreateCylinder());
+	m_Body.SetBuffer(m_pd3dDevice.Get(), Geometry::CreateBox(1.5f, 1.5f, 4.0f));
 	m_Body.SetTexture(texture.Get());
-	m_Body.SetWorldMatrix(XMMatrixRotationZ(XM_PIDIV2));
+
+	m_Wheels[0].SetBuffer(m_pd3dDevice.Get(), Geometry::CreateCylinder(0.5f));
+	m_Wheels[0].SetTexture(texture.Get());
+	m_Wheels[0].SetWorldMatrix(XMMatrixRotationZ(XM_PIDIV2) * XMMatrixTranslation(0.0f, -0.49f, 1.0f));
+
+	m_Wheels[1].SetBuffer(m_pd3dDevice.Get(), Geometry::CreateCylinder(0.5f));
+	m_Wheels[1].SetTexture(texture.Get());
+	m_Wheels[1].SetWorldMatrix(XMMatrixRotationZ(XM_PIDIV2) * XMMatrixTranslation(0.0f, -0.49f, -1.0f));
 	
 	// 初始化地板
 	HR(CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\floor.dds", nullptr, texture.ReleaseAndGetAddressOf()));
@@ -314,7 +381,7 @@ bool GameApp::InitResource()
 	auto camera = std::shared_ptr<FirstPersonCamera>(new FirstPersonCamera);
 	m_pCamera = camera;
 	camera->SetViewPort(0.0f, 0.0f, (float)m_ClientWidth, (float)m_ClientHeight);
-	camera->LookAt(XMFLOAT3(), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f));
+	camera->LookAt(XMFLOAT3(0.0f, 4.0f, -4.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f));
 
 	// 初始化仅在窗口大小变动时修改的值
 	m_pCamera->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
@@ -437,9 +504,9 @@ DirectX::XMFLOAT3 GameApp::GameObject::GetPosition() const
 	return XMFLOAT3(m_WorldMatrix(3, 0), m_WorldMatrix(3, 1), m_WorldMatrix(3, 2));
 }
 
-void GameApp::GameObject::SetPosition(DirectX::XMFLOAT3 pos)
+void GameApp::GameObject::SetPosition(float x, float y, float z)
 {
-	XMStoreFloat4x4(&m_WorldMatrix, XMMatrixTranslation(pos.x, pos.y, pos.z));
+	XMStoreFloat4x4(&m_WorldMatrix, XMMatrixTranslation(x, y, z));
 }
 
 template<class VertexType, class IndexType>

@@ -58,7 +58,7 @@ public:
 		DirectX::XMFLOAT3 GetPosition() const;
 
 		// 设置位置
-		void SetPosition(DirectX::XMFLOAT3 pos);
+		void SetPosition(float x, float y, float z);
 
 		// 设置缓冲区
 		template<class VertexType, class IndexType>
