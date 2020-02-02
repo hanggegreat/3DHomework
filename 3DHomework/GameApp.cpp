@@ -187,6 +187,10 @@ void GameApp::DrawScene()
 	for (auto& wall : m_Walls)
 		wall.Draw(m_pd3dImmediateContext.Get(), this);
 
+	m_Body.SetShadowState(true);
+	m_Body.Draw(m_pd3dImmediateContext.Get(), this);
+	m_Body.SetShadowState(false);
+
 	// 绘制Direct2D部分
 	if (m_pd2dRenderTarget != nullptr)
 	{
@@ -310,7 +314,7 @@ bool GameApp::InitResource()
 	m_CBRarely.numDirLight = 1;
 	m_CBRarely.numPointLight = 1;
 	m_CBRarely.numSpotLight = 0;
-	m_CBRarely.material = m_WoodCrateMat;
+	m_CBRarely.shadow = XMMatrixTranspose(XMMatrixShadow(XMVectorSet(0.0f, 1.0f, 0.0f, 0.99f), XMVectorSet(0.0f, 10.0f, -10.0f, 1.0f)));
 
 	// 更新不容易被修改的常量缓冲区资源
 	D3D11_MAPPED_SUBRESOURCE mappedData;
@@ -330,8 +334,9 @@ bool GameApp::InitResource()
 	m_pd3dImmediateContext->VSSetConstantBuffers(0, 1, m_pConstantBuffers[0].GetAddressOf());
 	m_pd3dImmediateContext->VSSetConstantBuffers(1, 1, m_pConstantBuffers[1].GetAddressOf());
 	m_pd3dImmediateContext->VSSetConstantBuffers(2, 1, m_pConstantBuffers[2].GetAddressOf());
+	m_pd3dImmediateContext->VSSetConstantBuffers(3, 1, m_pConstantBuffers[3].GetAddressOf());
 
-	m_pd3dImmediateContext->PSSetConstantBuffers(0, 1, m_pConstantBuffers[1].GetAddressOf());
+	m_pd3dImmediateContext->PSSetConstantBuffers(0, 1, m_pConstantBuffers[0].GetAddressOf());
 	m_pd3dImmediateContext->PSSetConstantBuffers(1, 1, m_pConstantBuffers[1].GetAddressOf());
 	m_pd3dImmediateContext->PSSetConstantBuffers(3, 1, m_pConstantBuffers[3].GetAddressOf());
 	m_pd3dImmediateContext->PSSetSamplers(0, 1, RenderStates::SSLinearWrap.GetAddressOf());
@@ -395,7 +400,7 @@ void GameApp::SetShadowRender()
 }
 
 GameApp::GameObject::GameObject()
-	: m_IndexCount(), m_VertexStride()
+	: m_IndexCount(), m_VertexStride(), m_IsShadow()
 {
 	XMStoreFloat4x4(&m_WorldMatrix, XMMatrixIdentity());
 }
@@ -470,7 +475,12 @@ void GameApp::GameObject::Draw(ID3D11DeviceContext * deviceContext, GameApp * ga
 	UINT strides = m_VertexStride;
 	UINT offsets = 0;
 
-	gameApp->SetRenderDefault();
+	if (m_IsShadow) {
+		gameApp->SetShadowRender();
+	}
+	else {
+		gameApp->SetRenderDefault();
+	}
 
 	deviceContext->IASetVertexBuffers(0, 1, m_pVertexBuffer.GetAddressOf(), &strides, &offsets);
 	deviceContext->IASetIndexBuffer(m_pIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
@@ -484,6 +494,8 @@ void GameApp::GameObject::Draw(ID3D11DeviceContext * deviceContext, GameApp * ga
 	XMMATRIX W = XMLoadFloat4x4(&m_WorldMatrix);
 	cbDrawing.world = XMMatrixTranspose(W);
 	cbDrawing.worldInvTranspose = XMMatrixInverse(nullptr, W);	// 两次转置抵消
+	cbDrawing.isShadow = m_IsShadow;
+	cbDrawing.material = m_IsShadow ? gameApp->m_ShadowMat : gameApp->m_WoodCrateMat;
 
 	// 更新常量缓冲区
 	D3D11_MAPPED_SUBRESOURCE mappedData;

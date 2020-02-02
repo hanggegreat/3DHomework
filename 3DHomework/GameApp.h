@@ -13,8 +13,11 @@ public:
 
 	struct CBChangesEveryDrawing
 	{
+		Material material;
 		DirectX::XMMATRIX world;
 		DirectX::XMMATRIX worldInvTranspose;
+		int isShadow;
+		DirectX::XMFLOAT3 pad1;
 	};
 
 	struct CBChangesEveryFrame
@@ -30,10 +33,10 @@ public:
 
 	struct CBChangesRarely
 	{
+		DirectX::XMMATRIX shadow;
 		DirectionalLight dirLight[10];
 		PointLight pointLight[10];
 		SpotLight spotLight[10];
-		Material material;
 		int numDirLight;
 		int numPointLight;
 		int numSpotLight;

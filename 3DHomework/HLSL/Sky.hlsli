@@ -1,4 +1,4 @@
-TextureCube g_TexCube : register(t0);
+TextureCube g_TexCube : register(t1);
 SamplerState g_Sam : register(s0);
 
 cbuffer CBSkyBoxChangesEveryDrawing : register(b0)
