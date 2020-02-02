@@ -5,6 +5,7 @@
 #include "Geometry.h"
 #include "LightHelper.h"
 #include "Camera.h"
+#include "RenderStates.h"
 
 class GameApp : public D3DApp
 {
@@ -39,12 +40,15 @@ public:
 		float pad;		// 打包保证16字节对齐
 	};
 
+	struct CBSkyBoxChangesRarely
+	{
+		DirectX::XMMATRIX g_WorldViewProj;
+	};
+
 	// 一个尽可能小的游戏对象类
 	class GameObject
 	{
 	public:
-		float theta;										// 绕Z轴旋转角度
-
 		GameObject();
 
 		// 获取位置
@@ -63,7 +67,9 @@ public:
 		DirectX::XMFLOAT4X4 GetWorldMatrix() const;
 		void XM_CALLCONV SetWorldMatrix(DirectX::FXMMATRIX world);
 		// 绘制
-		void Draw(ID3D11DeviceContext * deviceContext);
+		void Draw(ID3D11DeviceContext * deviceContext, GameApp * gameApp);
+
+		void SetShadowState(bool state);
 
 		// 设置调试对象名
 		// 若缓冲区被重新设置，调试对象名也需要被重新设置
@@ -74,11 +80,12 @@ public:
 		ComPtr<ID3D11Buffer> m_pVertexBuffer;				// 顶点缓冲区
 		ComPtr<ID3D11Buffer> m_pIndexBuffer;				// 索引缓冲区
 		UINT m_VertexStride;								// 顶点字节大小
-		UINT m_IndexCount;								    // 索引数目	
+		UINT m_IndexCount;								    // 索引数目
+		bool m_IsShadow;									// 当前是否为阴影
 	};
 
 	// 摄像机模式
-	enum class CameraMode { FirstPerson, ThirdPerson, Free };
+	enum class CameraMode { FirstPerson, ThirdPerson };
 	
 public:
 	GameApp(HINSTANCE hInstance);
@@ -93,6 +100,10 @@ private:
 	bool InitEffect();
 	bool InitResource();
 
+	void SetRenderDefault();
+	void SetSkyBoxRender();
+	void SetShadowRender();
+
 private:
 	
 	ComPtr<ID2D1SolidColorBrush> m_pColorBrush;				    // 单色笔刷
@@ -100,20 +111,28 @@ private:
 	ComPtr<IDWriteTextFormat> m_pTextFormat;					// 文本格式
 
 	ComPtr<ID3D11InputLayout> m_pVertexLayout3D;				// 用于3D的顶点输入布局
+	ComPtr<ID3D11InputLayout> m_pVertexLayoutSkyBox;		    // 用于SkyBox的顶点输入布局
+
+
 	ComPtr<ID3D11Buffer> m_pConstantBuffers[4];				    // 常量缓冲区
 
-	GameObject m_WoodCrate;									    // 木盒
+	Material m_ShadowMat;									    // 阴影材质
+	Material m_WoodCrateMat;									// 木盒材质
+
+	GameObject m_Body;											// 车身
+	GameObject m_Wheels[2];									    // 前后轮
 	GameObject m_Floor;										    // 地板
 	std::vector<GameObject> m_Walls;							// 墙壁
 
 	ComPtr<ID3D11VertexShader> m_pVertexShader3D;				// 用于3D的顶点着色器
+	ComPtr<ID3D11VertexShader> m_pVertexShaderSkyBox;			// 用于SkyBox的顶点着色器
+
 	ComPtr<ID3D11PixelShader> m_pPixelShader3D;				    // 用于3D的像素着色器
+	ComPtr<ID3D11PixelShader> m_pPixelShaderSkyBox;				// 用于SkyBox的像素着色器
 
 	CBChangesEveryFrame m_CBFrame;							    // 该缓冲区存放仅在每一帧进行更新的变量
 	CBChangesOnResize m_CBOnResize;							    // 该缓冲区存放仅在窗口大小变化时更新的变量
 	CBChangesRarely m_CBRarely;								    // 该缓冲区存放不会再进行修改的变量
-
-	ComPtr<ID3D11SamplerState> m_pSamplerState;				    // 采样器状态
 
 	std::shared_ptr<Camera> m_pCamera;						    // 摄像机
 	CameraMode m_CameraMode;									// 摄像机模式

@@ -21,6 +21,8 @@ bool GameApp::Init()
 	if (!D3DApp::Init())
 		return false;
 
+	RenderStates::InitAll(m_pd3dDevice.Get());
+
 	if (!InitEffect())
 		return false;
 
@@ -114,7 +116,7 @@ void GameApp::UpdateScene(float dt)
 	else if (m_CameraMode == CameraMode::ThirdPerson)
 	{
 		// 第三人称摄像机的操作
-		cam3rd->SetTarget(m_WoodCrate.GetPosition());
+		cam3rd->SetTarget(m_Body.GetPosition());
 
 		// 绕物体旋转
 		cam3rd->RotateX(mouseState.y * dt * 1.25f);
@@ -140,7 +142,7 @@ void GameApp::UpdateScene(float dt)
 			m_pCamera = cam1st;
 		}
 
-		cam1st->LookTo(m_WoodCrate.GetPosition(),
+		cam1st->LookTo(m_Body.GetPosition(),
 			XMFLOAT3(0.0f, 0.0f, 1.0f),
 			XMFLOAT3(0.0f, 1.0f, 0.0f));
 
@@ -154,7 +156,7 @@ void GameApp::UpdateScene(float dt)
 			cam3rd->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
 			m_pCamera = cam3rd;
 		}
-		XMFLOAT3 target = m_WoodCrate.GetPosition();
+		XMFLOAT3 target = m_Body.GetPosition();
 		cam3rd->SetTarget(target);
 		cam3rd->SetDistance(8.0f);
 		cam3rd->SetDistanceMinMax(3.0f, 20.0f);
@@ -180,10 +182,10 @@ void GameApp::DrawScene()
 	m_pd3dImmediateContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// 绘制几何模型
-	m_WoodCrate.Draw(m_pd3dImmediateContext.Get());
-	m_Floor.Draw(m_pd3dImmediateContext.Get());
+	m_Body.Draw(m_pd3dImmediateContext.Get(), this);
+	m_Floor.Draw(m_pd3dImmediateContext.Get(), this);
 	for (auto& wall : m_Walls)
-		wall.Draw(m_pd3dImmediateContext.Get());
+		wall.Draw(m_pd3dImmediateContext.Get(), this);
 
 	// 绘制Direct2D部分
 	if (m_pd2dRenderTarget != nullptr)
@@ -241,14 +243,22 @@ bool GameApp::InitResource()
 	HR(m_pd3dDevice->CreateBuffer(&cbd, nullptr, m_pConstantBuffers[2].GetAddressOf()));
 	cbd.ByteWidth = sizeof(CBChangesRarely);
 	HR(m_pd3dDevice->CreateBuffer(&cbd, nullptr, m_pConstantBuffers[3].GetAddressOf()));
+	
 	// ******************
 	// 初始化游戏对象
 	ComPtr<ID3D11ShaderResourceView> texture;
+	m_WoodCrateMat.ambient = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
+	m_WoodCrateMat.diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	m_WoodCrateMat.specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 16.0f);
+	
+	m_ShadowMat.ambient = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	m_ShadowMat.diffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.5f);
+	m_ShadowMat.specular = XMFLOAT4(0.0f, 0.0f, 0.0f, 16.0f);
 	// 初始化木箱
 	HR(CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\WoodCrate.dds", nullptr, texture.GetAddressOf()));
-	m_WoodCrate.SetBuffer(m_pd3dDevice.Get(), Geometry::CreateCylinder());
-	m_WoodCrate.SetTexture(texture.Get());
-	m_WoodCrate.SetWorldMatrix(XMMatrixRotationZ(XM_PIDIV2));
+	m_Body.SetBuffer(m_pd3dDevice.Get(), Geometry::CreateCylinder());
+	m_Body.SetTexture(texture.Get());
+	m_Body.SetWorldMatrix(XMMatrixRotationZ(XM_PIDIV2));
 	
 	// 初始化地板
 	HR(CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\floor.dds", nullptr, texture.ReleaseAndGetAddressOf()));
@@ -271,19 +281,6 @@ bool GameApp::InitResource()
 		m_Walls[i].SetTexture(texture.Get());
 	}
 		
-	// 初始化采样器状态
-	D3D11_SAMPLER_DESC sampDesc;
-	ZeroMemory(&sampDesc, sizeof(sampDesc));
-	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	sampDesc.MinLOD = 0;
-	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	HR(m_pd3dDevice->CreateSamplerState(&sampDesc, m_pSamplerState.GetAddressOf()));
-
-	
 	// ******************
 	// 初始化常量缓冲区的值
 	// 初始化每帧可能会变化的值
@@ -313,11 +310,7 @@ bool GameApp::InitResource()
 	m_CBRarely.numDirLight = 1;
 	m_CBRarely.numPointLight = 1;
 	m_CBRarely.numSpotLight = 0;
-	// 初始化材质
-	m_CBRarely.material.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	m_CBRarely.material.diffuse = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
-	m_CBRarely.material.specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 50.0f);
-
+	m_CBRarely.material = m_WoodCrateMat;
 
 	// 更新不容易被修改的常量缓冲区资源
 	D3D11_MAPPED_SUBRESOURCE mappedData;
@@ -333,18 +326,15 @@ bool GameApp::InitResource()
 	// 给渲染管线各个阶段绑定好所需资源
 	// 设置图元类型，设定输入布局
 	m_pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_pd3dImmediateContext->IASetInputLayout(m_pVertexLayout3D.Get());
-	// 默认绑定3D着色器
-	m_pd3dImmediateContext->VSSetShader(m_pVertexShader3D.Get(), nullptr, 0);
 	// 预先绑定各自所需的缓冲区，其中每帧更新的缓冲区需要绑定到两个缓冲区上
 	m_pd3dImmediateContext->VSSetConstantBuffers(0, 1, m_pConstantBuffers[0].GetAddressOf());
 	m_pd3dImmediateContext->VSSetConstantBuffers(1, 1, m_pConstantBuffers[1].GetAddressOf());
 	m_pd3dImmediateContext->VSSetConstantBuffers(2, 1, m_pConstantBuffers[2].GetAddressOf());
 
+	m_pd3dImmediateContext->PSSetConstantBuffers(0, 1, m_pConstantBuffers[1].GetAddressOf());
 	m_pd3dImmediateContext->PSSetConstantBuffers(1, 1, m_pConstantBuffers[1].GetAddressOf());
 	m_pd3dImmediateContext->PSSetConstantBuffers(3, 1, m_pConstantBuffers[3].GetAddressOf());
-	m_pd3dImmediateContext->PSSetShader(m_pPixelShader3D.Get(), nullptr, 0);
-	m_pd3dImmediateContext->PSSetSamplers(0, 1, m_pSamplerState.GetAddressOf());
+	m_pd3dImmediateContext->PSSetSamplers(0, 1, RenderStates::SSLinearWrap.GetAddressOf());
 
 	// ******************
 	// 设置调试对象名
@@ -356,9 +346,8 @@ bool GameApp::InitResource()
 	D3D11SetDebugObjectName(m_pConstantBuffers[3].Get(), "CBRarely");
 	D3D11SetDebugObjectName(m_pVertexShader3D.Get(), "Basic_VS");
 	D3D11SetDebugObjectName(m_pPixelShader3D.Get(), "Basic_PS");
-	D3D11SetDebugObjectName(m_pSamplerState.Get(), "SSLinearWrap");
 	m_Floor.SetDebugObjectName("Floor");
-	m_WoodCrate.SetDebugObjectName("WoodCrate");
+	m_Body.SetDebugObjectName("m_Body");
 	m_Walls[0].SetDebugObjectName("Walls[0]");
 	m_Walls[1].SetDebugObjectName("Walls[1]");
 	m_Walls[2].SetDebugObjectName("Walls[2]");
@@ -366,6 +355,43 @@ bool GameApp::InitResource()
 
 
 	return true;
+}
+
+void GameApp::SetRenderDefault()
+{
+	m_pd3dImmediateContext->IASetInputLayout(m_pVertexLayout3D.Get());
+	m_pd3dImmediateContext->VSSetShader(m_pVertexShader3D.Get(), nullptr, 0);
+	m_pd3dImmediateContext->RSSetState(nullptr);
+	m_pd3dImmediateContext->PSSetShader(m_pPixelShader3D.Get(), nullptr, 0);
+
+	// 使用各向异性过滤获取更好的绘制质量
+	m_pd3dImmediateContext->PSSetSamplers(0, 1, RenderStates::SSAnistropicWrap.GetAddressOf());
+	m_pd3dImmediateContext->OMSetDepthStencilState(nullptr, 0);
+	m_pd3dImmediateContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+}
+
+void GameApp::SetSkyBoxRender()
+{
+	m_pd3dImmediateContext->IASetInputLayout(m_pVertexLayoutSkyBox.Get());
+	m_pd3dImmediateContext->VSSetShader(m_pVertexShaderSkyBox.Get(), nullptr, 0);
+	m_pd3dImmediateContext->PSSetShader(m_pPixelShaderSkyBox.Get(), nullptr, 0);
+
+	m_pd3dImmediateContext->RSSetState(RenderStates::RSNoCull.Get());
+
+	m_pd3dImmediateContext->PSSetSamplers(0, 1, RenderStates::SSLinearWrap.GetAddressOf());
+	m_pd3dImmediateContext->OMSetDepthStencilState(RenderStates::DSSLessEqual.Get(), 0);
+	m_pd3dImmediateContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+}
+
+void GameApp::SetShadowRender()
+{
+	m_pd3dImmediateContext->IASetInputLayout(m_pVertexLayout3D.Get());
+	m_pd3dImmediateContext->VSSetShader(m_pVertexShader3D.Get(), nullptr, 0);
+	m_pd3dImmediateContext->RSSetState(RenderStates::RSNoCull.Get());
+	m_pd3dImmediateContext->PSSetShader(m_pPixelShader3D.Get(), nullptr, 0);
+	m_pd3dImmediateContext->PSSetSamplers(0, 1, RenderStates::SSLinearWrap.GetAddressOf());
+	m_pd3dImmediateContext->OMSetDepthStencilState(RenderStates::DSSNoDoubleBlend.Get(), 0);
+	m_pd3dImmediateContext->OMSetBlendState(RenderStates::BSTransparent.Get(), nullptr, 0xFFFFFFFF);
 }
 
 GameApp::GameObject::GameObject()
@@ -438,11 +464,14 @@ void XM_CALLCONV GameApp::GameObject::SetWorldMatrix(FXMMATRIX world)
 	XMStoreFloat4x4(&m_WorldMatrix, world);
 }
 
-void GameApp::GameObject::Draw(ID3D11DeviceContext * deviceContext)
+void GameApp::GameObject::Draw(ID3D11DeviceContext * deviceContext, GameApp * gameApp)
 {
 	// 设置顶点/索引缓冲区
 	UINT strides = m_VertexStride;
 	UINT offsets = 0;
+
+	gameApp->SetRenderDefault();
+
 	deviceContext->IASetVertexBuffers(0, 1, m_pVertexBuffer.GetAddressOf(), &strides, &offsets);
 	deviceContext->IASetIndexBuffer(m_pIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
@@ -466,6 +495,11 @@ void GameApp::GameObject::Draw(ID3D11DeviceContext * deviceContext)
 	deviceContext->PSSetShaderResources(0, 1, m_pTexture.GetAddressOf());
 	// 可以开始绘制
 	deviceContext->DrawIndexed(m_IndexCount, 0, 0);
+}
+
+void GameApp::GameObject::SetShadowState(bool state)
+{
+	m_IsShadow = state;
 }
 
 void GameApp::GameObject::SetDebugObjectName(const std::string& name)
