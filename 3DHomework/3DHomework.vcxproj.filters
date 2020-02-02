@@ -45,10 +45,10 @@
     <ClCompile Include="Main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Vertex.cpp">
+    <ClCompile Include="RenderStates.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RenderStates.cpp">
+    <ClCompile Include="Vertex.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

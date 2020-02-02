@@ -80,17 +80,7 @@ void FirstPersonCamera::SetPosition(float x, float y, float z)
 
 void XM_CALLCONV FirstPersonCamera::LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR up)
 {
-	LookTo(pos, target - pos, up);
-}
-
-void FirstPersonCamera::LookAt(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & target,const DirectX::XMFLOAT3 & up)
-{
-	LookAt(XMLoadFloat3(&pos), XMLoadFloat3(&target), XMLoadFloat3(&up));
-}
-
-void XM_CALLCONV FirstPersonCamera::LookTo(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR to, DirectX::FXMVECTOR up)
-{
-	XMVECTOR L = XMVector3Normalize(to);
+	XMVECTOR L = XMVector3Normalize(target - pos);
 	XMVECTOR R = XMVector3Normalize(XMVector3Cross(up, L));
 	XMVECTOR U = XMVector3Cross(L, R);
 
@@ -100,9 +90,9 @@ void XM_CALLCONV FirstPersonCamera::LookTo(DirectX::FXMVECTOR pos, DirectX::FXMV
 	XMStoreFloat3(&m_Up, U);
 }
 
-void FirstPersonCamera::LookTo(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & to, const DirectX::XMFLOAT3 & up)
+void FirstPersonCamera::LookAt(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & target,const DirectX::XMFLOAT3 & up)
 {
-	LookTo(XMLoadFloat3(&pos), XMLoadFloat3(&to), XMLoadFloat3(&up));
+	LookAt(XMLoadFloat3(&pos), XMLoadFloat3(&target), XMLoadFloat3(&up));
 }
 
 void FirstPersonCamera::Pitch(float rad)

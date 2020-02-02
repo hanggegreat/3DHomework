@@ -54,15 +54,7 @@ void GameApp::OnResize()
 	HRESULT hr = m_pd2dFactory->CreateDxgiSurfaceRenderTarget(surface.Get(), &props, m_pd2dRenderTarget.GetAddressOf());
 	surface.Reset();
 
-	if (hr == E_NOINTERFACE)
-	{
-		OutputDebugStringW(L"\n警告：Direct2D与Direct3D互操作性功能受限，你将无法看到文本信息。现提供下述可选方法：\n"
-			L"1. 对于Win7系统，需要更新至Win7 SP1，并安装KB2670838补丁以支持Direct2D显示。\n"
-			L"2. 自行完成Direct3D 10.1与Direct2D的交互。详情参阅："
-			L"https://docs.microsoft.com/zh-cn/windows/desktop/Direct2D/direct2d-and-direct3d-interoperation-overview""\n"
-			L"3. 使用别的字体库，比如FreeType。\n\n");
-	}
-	else if (hr == S_OK)
+	if (hr == S_OK)
 	{
 		// 创建固定颜色刷和文本格式
 		m_pd2dRenderTarget->CreateSolidColorBrush(

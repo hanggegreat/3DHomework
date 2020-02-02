@@ -18,12 +18,7 @@ namespace Geometry
 		std::vector<VertexType> vertexVec;	// 顶点数组
 		std::vector<IndexType> indexVec;	// 索引数组
 
-		MeshData()
-		{
-			// 需检验索引类型合法性
-			static_assert(sizeof(IndexType) == 2 || sizeof(IndexType) == 4, "The size of IndexType must be 2 bytes or 4 bytes!");
-			static_assert(std::is_unsigned<IndexType>::value, "IndexType must be unsigned integer!");
-		}
+		MeshData(){}
 	};
 
 	// 创建球体网格数据，levels和slices越大，精度越高。
@@ -54,8 +49,6 @@ namespace Geometry
 	MeshData<VertexType, IndexType> CreatePlane(float width = 10.0f, float depth = 10.0f, float texU = 1.0f, float texV = 1.0f,
 		const DirectX::XMFLOAT4& color = { 1.0f, 1.0f, 1.0f, 1.0f });
 }
-
-
 
 
 
