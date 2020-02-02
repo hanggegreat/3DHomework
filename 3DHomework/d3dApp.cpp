@@ -42,40 +42,33 @@ D3DApp::~D3DApp() {
 	}
 }
 
-HWND D3DApp::MainWnd()const {
+HWND D3DApp::MainWnd() const {
 	return m_hMainWnd;
 }
 
-float D3DApp::AspectRatio()const
-{
+float D3DApp::AspectRatio() const {
 	return static_cast<float>(m_ClientWidth) / m_ClientHeight;
 }
 
-int D3DApp::Run()
-{
+int D3DApp::Run() {
 	MSG msg = { 0 };
 
 	m_Timer.Reset();
 
-	while (msg.message != WM_QUIT)
-	{
-		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-		{
+	while (msg.message != WM_QUIT) {
+		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		else
-		{
+		else {
 			m_Timer.Tick();
 
-			if (!m_AppPaused)
-			{
+			if (!m_AppPaused) {
 				CalculateFrameStats();
 				UpdateScene(m_Timer.DeltaTime());
 				DrawScene();
 			}
-			else
-			{
+			else {
 				Sleep(100);
 			}
 		}
@@ -84,25 +77,14 @@ int D3DApp::Run()
 	return (int)msg.wParam;
 }
 
-bool D3DApp::Init()
-{
+bool D3DApp::Init() {
 	m_pMouse = std::make_unique<DirectX::Mouse>();
 	m_pKeyboard = std::make_unique<DirectX::Keyboard>();
 
-	if (!InitMainWindow())
-		return false;
-
-	if (!InitDirect2D())
-		return false;
-
-	if (!InitDirect3D())
-		return false;
-
-	return true;
+	return InitMainWindow() && InitDirect2D() && InitDirect3D();
 }
 
-void D3DApp::OnResize()
-{
+void D3DApp::OnResize() {
 	assert(m_pd3dImmediateContext);
 	assert(m_pd3dDevice);
 	assert(m_pSwapChain);
@@ -130,17 +112,14 @@ void D3DApp::OnResize()
 	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	// 要使用 4X MSAA?
-	if (m_Enable4xMsaa)
-	{
+	if (m_Enable4xMsaa) {
 		depthStencilDesc.SampleDesc.Count = 4;
 		depthStencilDesc.SampleDesc.Quality = m_4xMsaaQuality - 1;
 	}
-	else
-	{
+	else {
 		depthStencilDesc.SampleDesc.Count = 1;
 		depthStencilDesc.SampleDesc.Quality = 0;
 	}
-
 
 	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
 	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
@@ -166,10 +145,8 @@ void D3DApp::OnResize()
 	m_pd3dImmediateContext->RSSetViewports(1, &m_ScreenViewport);
 }
 
-LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg)
-	{
+LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	switch (msg) {
 		// WM_ACTIVATE is sent when the window is activated or deactivated.  
 		// We pause the game when the window is deactivated and unpause it 
 		// when it becomes active.  
@@ -326,8 +303,7 @@ bool D3DApp::InitMainWindow()
 	wc.lpszMenuName = 0;
 	wc.lpszClassName = L"D3DWndClassName";
 
-	if (!RegisterClass(&wc))
-	{
+	if (!RegisterClass(&wc)) {
 		MessageBox(0, L"RegisterClass Failed.", 0, 0);
 		return false;
 	}
@@ -345,8 +321,7 @@ bool D3DApp::InitMainWindow()
 	m_hMainWnd = CreateWindow(L"D3DWndClassName", m_MainWndCaption.c_str(),
 		WS_OVERLAPPEDWINDOW, (screenWidth - width) / 2, (screenHeight - height) / 2, width, height, 0, 0, m_hAppInst, 0);
 
-	if (!m_hMainWnd)
-	{
+	if (!m_hMainWnd) {
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
 		return false;
 	}
@@ -357,8 +332,7 @@ bool D3DApp::InitMainWindow()
 	return true;
 }
 
-bool D3DApp::InitDirect2D()
-{
+bool D3DApp::InitDirect2D() {
 	D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, m_pd2dFactory.GetAddressOf());
 	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
 		reinterpret_cast<IUnknown**>(m_pdwriteFactory.GetAddressOf()));
@@ -366,8 +340,7 @@ bool D3DApp::InitDirect2D()
 	return true;
 }
 
-bool D3DApp::InitDirect3D()
-{
+bool D3DApp::InitDirect3D() {
 	HRESULT hr = S_OK;
 
 	// 创建D3D设备 和 D3D设备上下文
@@ -394,32 +367,29 @@ bool D3DApp::InitDirect3D()
 
 	D3D_FEATURE_LEVEL featureLevel;
 	D3D_DRIVER_TYPE d3dDriverType;
-	for (UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++)
-	{
+	for (UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++) {
 		d3dDriverType = driverTypes[driverTypeIndex];
 		hr = D3D11CreateDevice(nullptr, d3dDriverType, nullptr, createDeviceFlags, featureLevels, numFeatureLevels,
 			D3D11_SDK_VERSION, m_pd3dDevice.GetAddressOf(), &featureLevel, m_pd3dImmediateContext.GetAddressOf());
 
-		if (hr == E_INVALIDARG)
-		{
+		if (hr == E_INVALIDARG) {
 			// Direct3D 11.0 的API不承认D3D_FEATURE_LEVEL_11_1，所以我们需要尝试特性等级11.0以及以下的版本
 			hr = D3D11CreateDevice(nullptr, d3dDriverType, nullptr, createDeviceFlags, &featureLevels[1], numFeatureLevels - 1,
 				D3D11_SDK_VERSION, m_pd3dDevice.GetAddressOf(), &featureLevel, m_pd3dImmediateContext.GetAddressOf());
 		}
 
-		if (SUCCEEDED(hr))
+		if (SUCCEEDED(hr)) {
 			break;
+		}
 	}
 
-	if (FAILED(hr))
-	{
+	if (FAILED(hr)) {
 		MessageBox(0, L"D3D11CreateDevice Failed.", 0, 0);
 		return false;
 	}
 
 	// 检测是否支持特性等级11.0或11.1
-	if (featureLevel != D3D_FEATURE_LEVEL_11_0 && featureLevel != D3D_FEATURE_LEVEL_11_1)
-	{
+	if (featureLevel != D3D_FEATURE_LEVEL_11_0 && featureLevel != D3D_FEATURE_LEVEL_11_1) {
 		MessageBox(0, L"Direct3D Feature Level 11 unsupported.", 0, 0);
 		return false;
 	}
@@ -452,13 +422,11 @@ bool D3DApp::InitDirect3D()
 	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 	// 是否开启4倍多重采样？
-	if (m_Enable4xMsaa)
-	{
+	if (m_Enable4xMsaa) {
 		sd.SampleDesc.Count = 4;
 		sd.SampleDesc.Quality = m_4xMsaaQuality - 1;
 	}
-	else
-	{
+	else {
 		sd.SampleDesc.Count = 1;
 		sd.SampleDesc.Quality = 0;
 	}
@@ -483,16 +451,14 @@ bool D3DApp::InitDirect3D()
 
 
 
-void D3DApp::CalculateFrameStats()
-{
+void D3DApp::CalculateFrameStats() {
 	// 该代码计算每秒帧速，并计算每一帧渲染需要的时间，显示在窗口标题
 	static int frameCnt = 0;
 	static float timeElapsed = 0.0f;
 
 	frameCnt++;
 
-	if ((m_Timer.TotalTime() - timeElapsed) >= 1.0f)
-	{
+	if ((m_Timer.TotalTime() - timeElapsed) >= 1.0f) {
 		float fps = (float)frameCnt; // fps = frameCnt / 1
 		float mspf = 1000.0f / fps;
 

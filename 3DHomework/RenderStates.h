@@ -7,16 +7,12 @@
 #include <d3d11_1.h>
 
 
-class RenderStates
-{
+class RenderStates {
 public:
 	template <class T>
 	using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-	static bool IsInit();
-
 	static void InitAll(ID3D11Device * device);
-	// 使用ComPtr无需手工释放
 
 public:
 	static ComPtr<ID3D11RasterizerState> RSNoCull;			            // 光栅化器状态：无背面裁剪模式

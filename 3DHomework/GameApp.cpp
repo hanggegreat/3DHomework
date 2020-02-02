@@ -65,8 +65,7 @@ void GameApp::OnResize() {
 	}
 	
 	// 摄像机变更显示
-	if (m_pCamera != nullptr)
-	{
+	if (m_pCamera != nullptr) {
 		m_pCamera->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
 		m_pCamera->SetViewPort(0.0f, 0.0f, (float)m_ClientWidth, (float)m_ClientHeight);
 		m_CBOnResize.proj = XMMatrixTranspose(m_pCamera->GetProjXM());
@@ -454,8 +453,8 @@ void GameApp::GameObject::SetPosition(float x, float y, float z) {
 	XMStoreFloat4x4(&m_WorldMatrix, XMMatrixTranslation(x, y, z));
 }
 
-template<class VertexType, class IndexType>
-void GameApp::GameObject::SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData) {
+template<class VertexType>
+void GameApp::GameObject::SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType>& meshData) {
 	// 释放旧资源
 	m_pVertexBuffer.Reset();
 	m_pIndexBuffer.Reset();
@@ -480,7 +479,7 @@ void GameApp::GameObject::SetBuffer(ID3D11Device * device, const Geometry::MeshD
 	D3D11_BUFFER_DESC ibd;
 	ZeroMemory(&ibd, sizeof(ibd));
 	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth = m_IndexCount * sizeof(IndexType);
+	ibd.ByteWidth = m_IndexCount * sizeof(int);
 	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags = 0;
 	// 新建索引缓冲区
@@ -593,8 +592,8 @@ void GameApp::SkyBox::Draw(ID3D11DeviceContext * deviceContext, GameApp * gameAp
 	deviceContext->DrawIndexed(m_IndexCount, 0, 0);
 }
 
-template<class VertexType, class IndexType>
-void GameApp::SkyBox::SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData) {
+template<class VertexType>
+void GameApp::SkyBox::SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType>& meshData) {
 	// 释放旧资源
 	m_pVertexBuffer.Reset();
 	m_pIndexBuffer.Reset();
@@ -619,7 +618,7 @@ void GameApp::SkyBox::SetBuffer(ID3D11Device * device, const Geometry::MeshData<
 	D3D11_BUFFER_DESC ibd;
 	ZeroMemory(&ibd, sizeof(ibd));
 	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-	ibd.ByteWidth = m_IndexCount * sizeof(IndexType);
+	ibd.ByteWidth = m_IndexCount * sizeof(int);
 	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags = 0;
 	// 新建索引缓冲区

@@ -1,3 +1,5 @@
+// 程序主体框架
+
 #ifndef GAMEAPP_H
 #define GAMEAPP_H
 
@@ -7,12 +9,10 @@
 #include "Camera.h"
 #include "RenderStates.h"
 
-class GameApp : public D3DApp
-{
+class GameApp : public D3DApp {
 public:
 
-	struct CBChangesEveryDrawing
-	{
+	struct CBChangesEveryDrawing {
 		Material material;
 		DirectX::XMMATRIX world;
 		DirectX::XMMATRIX worldInvTranspose;
@@ -20,19 +20,16 @@ public:
 		DirectX::XMFLOAT3 pad1;
 	};
 
-	struct CBChangesEveryFrame
-	{
+	struct CBChangesEveryFrame {
 		DirectX::XMMATRIX view;
 		DirectX::XMFLOAT4 eyePos;
 	};
 
-	struct CBChangesOnResize
-	{
+	struct CBChangesOnResize {
 		DirectX::XMMATRIX proj;
 	};
 
-	struct CBChangesRarely
-	{
+	struct CBChangesRarely {
 		DirectX::XMMATRIX shadow;
 		DirectionalLight dirLight[10];
 		PointLight pointLight[10];
@@ -43,14 +40,12 @@ public:
 		float pad;		// 打包保证16字节对齐
 	};
 
-	struct CBSkyBoxChangesEveryDrawing
-	{
+	struct CBSkyBoxChangesEveryDrawing {
 		DirectX::XMMATRIX worldViewProj;
 	};
 
 	// 一个尽可能小的游戏对象类
-	class GameObject
-	{
+	class GameObject {
 	public:
 		GameObject();
 
@@ -61,8 +56,8 @@ public:
 		void SetPosition(float x, float y, float z);
 
 		// 设置缓冲区
-		template<class VertexType, class IndexType>
-		void SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData);
+		template<class VertexType>
+		void SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType>& meshData);
 		// 设置纹理
 		void SetTexture(ID3D11ShaderResourceView * texture);
 		// 设置矩阵
@@ -87,14 +82,13 @@ public:
 	};
 
 	// 一个尽可能小的天空盒对象类
-	class SkyBox
-	{
+	class SkyBox {
 	public:
 		SkyBox();
 
 		// 设置缓冲区
-		template<class VertexType, class IndexType>
-		void SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData);
+		template<class VertexType>
+		void SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType>& meshData);
 		// 设置纹理
 		void SetTextureCube(ID3D11ShaderResourceView * texture);
 		void XM_CALLCONV SetWorldViewProjMatrix(DirectX::FXMMATRIX WVP);
@@ -164,7 +158,6 @@ private:
 
 	std::shared_ptr<Camera> m_pCamera;						    // 摄像机
 	CameraMode m_CameraMode;									// 摄像机模式
-
 };
 
 

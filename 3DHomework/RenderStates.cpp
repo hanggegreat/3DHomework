@@ -1,5 +1,6 @@
 #include "RenderStates.h"
 #include "d3dUtil.h"
+
 using namespace Microsoft::WRL;
 
 ComPtr<ID3D11RasterizerState> RenderStates::RSNoCull = nullptr;
@@ -12,20 +13,9 @@ ComPtr<ID3D11BlendState> RenderStates::BSTransparent = nullptr;
 ComPtr<ID3D11DepthStencilState> RenderStates::DSSLessEqual = nullptr;
 ComPtr<ID3D11DepthStencilState> RenderStates::DSSNoDoubleBlend = nullptr;
 
-bool RenderStates::IsInit()
-{
-	// 一般来说初始化操作会把所有的状态都创建出来
-	return RSNoCull != nullptr;
-}
 
-void RenderStates::InitAll(ID3D11Device * device)
-{
-	// 先前初始化过的话就没必要重来了
-	if (IsInit())
-		return;
-	// ******************
+void RenderStates::InitAll(ID3D11Device * device) {
 	// 初始化光栅化器状态
-	//
 	D3D11_RASTERIZER_DESC rasterizerDesc;
 	ZeroMemory(&rasterizerDesc, sizeof(rasterizerDesc));
 
@@ -36,9 +26,7 @@ void RenderStates::InitAll(ID3D11Device * device)
 	rasterizerDesc.DepthClipEnable = true;
 	device->CreateRasterizerState(&rasterizerDesc, RSNoCull.GetAddressOf());
 
-	// ******************
 	// 初始化采样器状态
-	//
 	D3D11_SAMPLER_DESC sampDesc;
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
 
@@ -63,15 +51,12 @@ void RenderStates::InitAll(ID3D11Device * device)
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&sampDesc, SSAnistropicWrap.GetAddressOf());
 
-	// ******************
 	// 初始化混合状态
-	//
 	D3D11_BLEND_DESC blendDesc;
 	ZeroMemory(&blendDesc, sizeof(blendDesc));
 	auto& rtDesc = blendDesc.RenderTarget[0];
+	
 	// 透明混合模式
-	// Color = SrcAlpha * SrcColor + (1 - SrcAlpha) * DestColor 
-	// Alpha = SrcAlpha
 	blendDesc.AlphaToCoverageEnable = false;
 	blendDesc.IndependentBlendEnable = false;
 	rtDesc.BlendEnable = true;
@@ -85,9 +70,7 @@ void RenderStates::InitAll(ID3D11Device * device)
 
 	device->CreateBlendState(&blendDesc, BSTransparent.GetAddressOf());
 
-	// ******************
 	// 初始化深度/模板状态
-	//
 	D3D11_DEPTH_STENCIL_DESC dsDesc;
 
 	// 允许使用深度值一致的像素进行替换的深度/模板状态
@@ -95,7 +78,6 @@ void RenderStates::InitAll(ID3D11Device * device)
 	dsDesc.DepthEnable = true;
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-
 	dsDesc.StencilEnable = false;
 
 	device->CreateDepthStencilState(&dsDesc, DSSLessEqual.GetAddressOf());

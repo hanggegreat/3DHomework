@@ -1,3 +1,5 @@
+// 负责d3d相关设置
+
 #ifndef D3DAPP_H
 #define D3DAPP_H
 
