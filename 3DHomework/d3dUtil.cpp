@@ -6,17 +6,15 @@ HRESULT CreateShaderFromFile(
 	const WCHAR* hlslFileName,
 	LPCSTR entryPoint,
 	LPCSTR shaderModel,
-	ID3DBlob** ppBlobOut)
-{
+	ID3DBlob** ppBlobOut) {
+
 	HRESULT hr = S_OK;
 
 	// 寻找是否有已经编译好的顶点着色器
-	if (csoFileNameInOut && D3DReadFileToBlob(csoFileNameInOut, ppBlobOut) == S_OK)
-	{
+	if (csoFileNameInOut && D3DReadFileToBlob(csoFileNameInOut, ppBlobOut) == S_OK)	{
 		return hr;
 	}
-	else
-	{
+	else {
 		DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #ifdef _DEBUG
 		// 设置 D3DCOMPILE_DEBUG 标志用于获取着色器调试信息。该标志可以提升调试体验，
@@ -31,8 +29,7 @@ HRESULT CreateShaderFromFile(
 			dwShaderFlags, 0, ppBlobOut, &errorBlob);
 
 		// 若指定了输出文件名，则将着色器二进制信息输出
-		if (csoFileNameInOut)
-		{
+		if (csoFileNameInOut) {
 			return D3DWriteBlobToFile(*ppBlobOut, csoFileNameInOut, FALSE);
 		}
 	}

@@ -1,5 +1,6 @@
 #include "GameApp.h"
 #include "d3dUtil.h"
+
 using namespace DirectX;
 
 GameApp::GameApp(HINSTANCE hInstance)
@@ -7,26 +8,22 @@ GameApp::GameApp(HINSTANCE hInstance)
 	m_CameraMode(CameraMode::FirstPerson),
 	m_CBFrame(),
 	m_CBOnResize(),
-	m_CBRarely()
-{
+	m_CBRarely() {
 }
 
-GameApp::~GameApp()
-{
+GameApp::~GameApp() {
 }
 
-bool GameApp::Init()
-{
-	if (!D3DApp::Init())
+bool GameApp::Init() {
+	if (!D3DApp::Init()) {
 		return false;
+	}
 
 	RenderStates::InitAll(m_pd3dDevice.Get());
 
-	if (!InitEffect())
+	if (!InitEffect() || !InitResource()) {
 		return false;
-
-	if (!InitResource())
-		return false;
+	}
 
 	// 初始化鼠标，键盘不需要
 	m_pMouse->SetWindow(m_hMainWnd);
@@ -35,8 +32,7 @@ bool GameApp::Init()
 	return true;
 }
 
-void GameApp::OnResize()
-{
+void GameApp::OnResize() {
 	assert(m_pd2dFactory);
 	assert(m_pdwriteFactory);
 	// 释放D2D的相关资源
@@ -54,8 +50,7 @@ void GameApp::OnResize()
 	HRESULT hr = m_pd2dFactory->CreateDxgiSurfaceRenderTarget(surface.Get(), &props, m_pd2dRenderTarget.GetAddressOf());
 	surface.Reset();
 
-	if (hr == S_OK)
-	{
+	if (hr == S_OK) {
 		// 创建固定颜色刷和文本格式
 		m_pd2dRenderTarget->CreateSolidColorBrush(
 			D2D1::ColorF(D2D1::ColorF::White),
@@ -64,8 +59,7 @@ void GameApp::OnResize()
 			DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 15, L"zh-cn",
 			m_pTextFormat.GetAddressOf());
 	}
-	else
-	{
+	else {
 		// 报告异常问题
 		assert(m_pd2dRenderTarget);
 	}
@@ -84,8 +78,7 @@ void GameApp::OnResize()
 	}
 }
 
-void GameApp::UpdateScene(float dt)
-{
+void GameApp::UpdateScene(float dt) {
 	// 更新鼠标事件，获取相对偏移量
 	Mouse::State mouseState = m_pMouse->GetState();
 	Mouse::State lastMouseState = m_MouseTracker.GetLastState();
@@ -144,8 +137,7 @@ void GameApp::UpdateScene(float dt)
 		* XMMatrixTranslation(bodyPos.x + moveX - sin(theta), -0.49f, bodyPos.z + moveZ - cos(theta))
 	);
 
-	if (m_CameraMode == CameraMode::FirstPerson)
-	{
+	if (m_CameraMode == CameraMode::FirstPerson) {
 		bodyPos = m_Body.GetPosition();
 		cam1st->SetPosition(bodyPos.x - 4 * sin(theta), 4.0f, bodyPos.z - 4 * cos(theta));
 
@@ -153,8 +145,7 @@ void GameApp::UpdateScene(float dt)
 		cam1st->Pitch(mouseState.y * dt * 1.25f);
 		cam1st->RotateY(mouseState.x * dt * 1.25f);
 	}
-	else if (m_CameraMode == CameraMode::ThirdPerson)
-	{
+	else if (m_CameraMode == CameraMode::ThirdPerson) {
 		// 第三人称摄像机的操作
 		cam3rd->SetTarget(m_Body.GetPosition());
 
@@ -173,10 +164,8 @@ void GameApp::UpdateScene(float dt)
 	m_pMouse->ResetScrollWheelValue();
 	
 	// 摄像机模式切换
-	if (m_KeyboardTracker.IsKeyPressed(Keyboard::D1) && m_CameraMode != CameraMode::FirstPerson)
-	{
-		if (!cam1st)
-		{
+	if (m_KeyboardTracker.IsKeyPressed(Keyboard::D1) && m_CameraMode != CameraMode::FirstPerson) {
+		if (!cam1st) {
 			cam1st.reset(new FirstPersonCamera);
 			cam1st->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
 			m_pCamera = cam1st;
@@ -189,10 +178,8 @@ void GameApp::UpdateScene(float dt)
 
 		m_CameraMode = CameraMode::FirstPerson;
 	}
-	else if (m_KeyboardTracker.IsKeyPressed(Keyboard::D2) && m_CameraMode != CameraMode::ThirdPerson)
-	{
-		if (!cam3rd)
-		{
+	else if (m_KeyboardTracker.IsKeyPressed(Keyboard::D2) && m_CameraMode != CameraMode::ThirdPerson) {
+		if (!cam3rd) {
 			cam3rd.reset(new ThirdPersonCamera);
 			cam3rd->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
 			m_pCamera = cam3rd;
@@ -205,8 +192,9 @@ void GameApp::UpdateScene(float dt)
 		m_CameraMode = CameraMode::ThirdPerson;
 	}
 	// 退出程序，这里应向窗口发送销毁信息
-	if (keyState.IsKeyDown(Keyboard::Escape))
+	if (keyState.IsKeyDown(Keyboard::Escape)) {
 		SendMessage(MainWnd(), WM_DESTROY, 0, 0);
+	}
 	
 	D3D11_MAPPED_SUBRESOURCE mappedData;
 	m_pd3dImmediateContext->Map(m_pConstantBuffers[1].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
@@ -214,8 +202,7 @@ void GameApp::UpdateScene(float dt)
 	m_pd3dImmediateContext->Unmap(m_pConstantBuffers[1].Get(), 0);
 }
 
-void GameApp::DrawScene()
-{
+void GameApp::DrawScene() {
 	assert(m_pd3dImmediateContext);
 	assert(m_pSwapChain);
 
@@ -245,8 +232,7 @@ void GameApp::DrawScene()
 	m_SkyBox.Draw(m_pd3dImmediateContext.Get(), this, *m_pCamera);
 
 	// 绘制Direct2D部分
-	if (m_pd2dRenderTarget != nullptr)
-	{
+	if (m_pd2dRenderTarget != nullptr) {
 		m_pd2dRenderTarget->BeginDraw();
 		std::wstring text = L"切换摄像机模式: 1-第一人称 2-第三人称\n"
 			L"W/S/A/D 前进/后退/左平移/右平移   Esc退出\n"
@@ -265,8 +251,7 @@ void GameApp::DrawScene()
 }
 
 
-bool GameApp::InitEffect()
-{
+bool GameApp::InitEffect() {
 	ComPtr<ID3DBlob> blob;
 
 	// 创建顶点着色器(天空盒)
@@ -293,8 +278,7 @@ bool GameApp::InitEffect()
 	return true;
 }
 
-bool GameApp::InitResource()
-{
+bool GameApp::InitResource() {
 	// ******************
 	// 设置常量缓冲区描述
 	D3D11_BUFFER_DESC cbd;
@@ -355,8 +339,7 @@ bool GameApp::InitResource()
 	m_Walls.resize(4);
 	CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\brick.dds", nullptr, texture.ReleaseAndGetAddressOf());
 	// 这里控制墙体四个面的生成
-	for (int i = 0; i < 4; ++i)
-	{
+	for (int i = 0; i < 4; ++i) {
 		m_Walls[i].SetBuffer(m_pd3dDevice.Get(),
 			Geometry::CreatePlane(XMFLOAT2(20.0f, 8.0f), XMFLOAT2(5.0f, 1.5f)));
 		XMMATRIX world = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PIDIV2 * i)
@@ -365,7 +348,6 @@ bool GameApp::InitResource()
 		m_Walls[i].SetTexture(texture.Get());
 	}
 		
-	// ******************
 	// 初始化常量缓冲区的值
 	// 初始化每帧可能会变化的值
 	m_CameraMode = CameraMode::FirstPerson;
@@ -425,8 +407,7 @@ bool GameApp::InitResource()
 	return true;
 }
 
-void GameApp::SetRenderDefault()
-{
+void GameApp::SetRenderDefault() {
 	m_pd3dImmediateContext->IASetInputLayout(m_pVertexLayout3D.Get());
 	m_pd3dImmediateContext->VSSetShader(m_pVertexShader3D.Get(), nullptr, 0);
 	m_pd3dImmediateContext->RSSetState(nullptr);
@@ -438,8 +419,7 @@ void GameApp::SetRenderDefault()
 	m_pd3dImmediateContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
-void GameApp::SetSkyBoxRender()
-{
+void GameApp::SetSkyBoxRender() {
 	m_pd3dImmediateContext->IASetInputLayout(m_pVertexLayoutSkyBox.Get());
 	m_pd3dImmediateContext->VSSetShader(m_pVertexShaderSkyBox.Get(), nullptr, 0);
 	m_pd3dImmediateContext->PSSetShader(m_pPixelShaderSkyBox.Get(), nullptr, 0);
@@ -451,8 +431,7 @@ void GameApp::SetSkyBoxRender()
 	m_pd3dImmediateContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
-void GameApp::SetShadowRender()
-{
+void GameApp::SetShadowRender() {
 	m_pd3dImmediateContext->IASetInputLayout(m_pVertexLayout3D.Get());
 	m_pd3dImmediateContext->VSSetShader(m_pVertexShader3D.Get(), nullptr, 0);
 	m_pd3dImmediateContext->RSSetState(RenderStates::RSNoCull.Get());
@@ -463,24 +442,20 @@ void GameApp::SetShadowRender()
 }
 
 GameApp::GameObject::GameObject()
-	: m_IndexCount(), m_VertexStride(), m_IsShadow()
-{
+	: m_IndexCount(), m_VertexStride(), m_IsShadow() {
 	XMStoreFloat4x4(&m_WorldMatrix, XMMatrixIdentity());
 }
 
-DirectX::XMFLOAT3 GameApp::GameObject::GetPosition() const
-{
+DirectX::XMFLOAT3 GameApp::GameObject::GetPosition() const {
 	return XMFLOAT3(m_WorldMatrix(3, 0), m_WorldMatrix(3, 1), m_WorldMatrix(3, 2));
 }
 
-void GameApp::GameObject::SetPosition(float x, float y, float z)
-{
+void GameApp::GameObject::SetPosition(float x, float y, float z) {
 	XMStoreFloat4x4(&m_WorldMatrix, XMMatrixTranslation(x, y, z));
 }
 
 template<class VertexType, class IndexType>
-void GameApp::GameObject::SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData)
-{
+void GameApp::GameObject::SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData) {
 	// 释放旧资源
 	m_pVertexBuffer.Reset();
 	m_pIndexBuffer.Reset();
@@ -513,13 +488,11 @@ void GameApp::GameObject::SetBuffer(ID3D11Device * device, const Geometry::MeshD
 	device->CreateBuffer(&ibd, &InitData, m_pIndexBuffer.GetAddressOf());
 }
 
-void GameApp::GameObject::SetTexture(ID3D11ShaderResourceView * texture)
-{
+void GameApp::GameObject::SetTexture(ID3D11ShaderResourceView * texture) {
 	m_pTexture = texture;
 }
 
-void GameApp::GameObject::SetWorldMatrix(const XMFLOAT4X4 & world)
-{
+void GameApp::GameObject::SetWorldMatrix(const XMFLOAT4X4 & world) {
 	m_WorldMatrix = world;
 }
 
@@ -527,13 +500,11 @@ DirectX::XMFLOAT4X4 GameApp::GameObject::GetWorldMatrix() const {
 	return m_WorldMatrix;
 }
 
-void XM_CALLCONV GameApp::GameObject::SetWorldMatrix(FXMMATRIX world)
-{
+void XM_CALLCONV GameApp::GameObject::SetWorldMatrix(FXMMATRIX world) {
 	XMStoreFloat4x4(&m_WorldMatrix, world);
 }
 
-void GameApp::GameObject::Draw(ID3D11DeviceContext * deviceContext, GameApp * gameApp)
-{
+void GameApp::GameObject::Draw(ID3D11DeviceContext * deviceContext, GameApp * gameApp) {
 	// 设置顶点/索引缓冲区
 	UINT strides = m_VertexStride;
 	UINT offsets = 0;
@@ -572,27 +543,22 @@ void GameApp::GameObject::Draw(ID3D11DeviceContext * deviceContext, GameApp * ga
 	deviceContext->DrawIndexed(m_IndexCount, 0, 0);
 }
 
-void GameApp::GameObject::SetShadowState(bool state)
-{
+void GameApp::GameObject::SetShadowState(bool state) {
 	m_IsShadow = state;
 }
 
-GameApp::SkyBox::SkyBox() : m_VertexStride(), m_IndexCount()
-{
+GameApp::SkyBox::SkyBox() : m_VertexStride(), m_IndexCount() {
 }
 
-void GameApp::SkyBox::SetTextureCube(ID3D11ShaderResourceView * textureCube)
-{
+void GameApp::SkyBox::SetTextureCube(ID3D11ShaderResourceView * textureCube) {
 	m_pTextureCube = textureCube;
 }
 
-void XM_CALLCONV GameApp::SkyBox::SetWorldViewProjMatrix(DirectX::FXMMATRIX WVP)
-{
+void XM_CALLCONV GameApp::SkyBox::SetWorldViewProjMatrix(DirectX::FXMMATRIX WVP) {
 	XMStoreFloat4x4(&m_worldViewProj, WVP);
 }
 
-void GameApp::SkyBox::Draw(ID3D11DeviceContext * deviceContext, GameApp * gameApp, Camera & camera)
-{
+void GameApp::SkyBox::Draw(ID3D11DeviceContext * deviceContext, GameApp * gameApp, Camera & camera) {
 	// 设置顶点/索引缓冲区
 	UINT strides = sizeof(XMFLOAT3);
 	UINT offsets = 0;
@@ -628,8 +594,7 @@ void GameApp::SkyBox::Draw(ID3D11DeviceContext * deviceContext, GameApp * gameAp
 }
 
 template<class VertexType, class IndexType>
-void GameApp::SkyBox::SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData)
-{
+void GameApp::SkyBox::SetBuffer(ID3D11Device * device, const Geometry::MeshData<VertexType, IndexType>& meshData) {
 	// 释放旧资源
 	m_pVertexBuffer.Reset();
 	m_pIndexBuffer.Reset();

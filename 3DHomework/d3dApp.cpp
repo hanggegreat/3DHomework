@@ -2,25 +2,17 @@
 #include "d3dUtil.h"
 #include <sstream>
 
-namespace
-{
-	// This is just used to forward Windows messages from a global window
-	// procedure to our member function window procedure because we cannot
-	// assign a member function to WNDCLASS::lpfnWndProc.
+namespace {
 	D3DApp* g_pd3dApp = nullptr;
 }
 
-LRESULT CALLBACK
-MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
-	// before CreateWindow returns, and thus before m_hMainWnd is valid.
+LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	return g_pd3dApp->MsgProc(hwnd, msg, wParam, lParam);
 }
 
 D3DApp::D3DApp(HINSTANCE hInstance)
 	: m_hAppInst(hInstance),
-	m_MainWndCaption(L"Camera"),
+	m_MainWndCaption(L"会走的小车"),
 	m_ClientWidth(800),
 	m_ClientHeight(600),
 	m_hMainWnd(nullptr),
@@ -35,30 +27,22 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 	m_pSwapChain(nullptr),
 	m_pDepthStencilBuffer(nullptr),
 	m_pRenderTargetView(nullptr),
-	m_pDepthStencilView(nullptr)
-{
+	m_pDepthStencilView(nullptr) {
+
 	ZeroMemory(&m_ScreenViewport, sizeof(D3D11_VIEWPORT));
 
-
-	// 让一个全局指针获取这个类，这样我们就可以在Windows消息处理的回调函数
-	// 让这个类调用内部的回调函数了
+	// 让一个全局指针获取这个类，可以在Windows消息处理的回调函数中调用这个类内部的回调函数
 	g_pd3dApp = this;
 }
 
-D3DApp::~D3DApp()
-{
+D3DApp::~D3DApp() {
 	// 恢复所有默认设定
-	if (m_pd3dImmediateContext)
+	if (m_pd3dImmediateContext) {
 		m_pd3dImmediateContext->ClearState();
+	}
 }
 
-HINSTANCE D3DApp::AppInst()const
-{
-	return m_hAppInst;
-}
-
-HWND D3DApp::MainWnd()const
-{
+HWND D3DApp::MainWnd()const {
 	return m_hMainWnd;
 }
 
