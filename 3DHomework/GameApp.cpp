@@ -89,11 +89,15 @@ void GameApp::UpdateScene() {
 	auto cam1st = std::dynamic_pointer_cast<FirstPersonCamera>(m_pCamera);
 	auto cam3rd = std::dynamic_pointer_cast<ThirdPersonCamera>(m_pCamera);
 
+	// 小车当前累计绕Y轴旋转角度
 	static float theta = 0.0f;
+	// 小车当前累计移动距离
 	static float length = 0.0f;
+	// 车速
 	static float velocity = 0.0f;
+	// 用于判断第一人称摄像机是否需要跟随小车旋转
 	static bool needRotate = true;
-
+	// 计算前轮转动角度
 	float frontWheelTheta = 0.0f;
 	
 	if (m_KeyboardTracker.IsKeyPressed(Keyboard::W)) {
@@ -112,24 +116,26 @@ void GameApp::UpdateScene() {
 			}
 		}
 	}
-
 	if (keyState.IsKeyDown(Keyboard::A)) {
-		theta += velocity > -0.5f ? -0.002f: 0.002f;
+		theta += velocity > -0.5f ? -0.0025f: 0.0025f;
 		frontWheelTheta -= 0.3f;
 		needRotate = true;
 	}
 	if (keyState.IsKeyDown(Keyboard::D)) {
-		theta += velocity > -0.5f ? 0.002f : -0.002f;
+		theta += velocity > -0.5f ? 0.0025f : -0.0025f;
 		frontWheelTheta += 0.3f;
 		needRotate = true;
 	}
 
 	frontWheelTheta += theta;
 	XMFLOAT3 bodyPos = m_Body.GetPosition();
-	float move = velocity * 0.002f;
+	float move = velocity * 0.0025f;
 	float moveX = move * sin(theta);
 	float moveZ = move * cos(theta);
+
+	// 前轮自转轴
 	XMFLOAT3 frontWheelNormal(-cos(frontWheelTheta), 0.0f, sin(frontWheelTheta));
+	// 后轮自转轴
 	XMFLOAT3 backWheelNormal(-cos(theta), 0.0f, sin(theta));
 
 	length += move;
@@ -151,31 +157,31 @@ void GameApp::UpdateScene() {
 		* XMMatrixTranslation(bodyPos.x + moveX - sin(theta), -0.49f, bodyPos.z + moveZ - cos(theta))
 	);
 
+	// 第一人称摄像机的操作
 	if (m_CameraMode == CameraMode::FirstPerson) {
-		bodyPos = m_Body.GetPosition();
 		if (fabs(mouseState.y) > 0.01f || fabs(mouseState.x) > 0.01f) {
 			needRotate = false;
 		}
 		
+		bodyPos = m_Body.GetPosition();
 		if (needRotate) {
 			cam1st->LookAt(XMFLOAT3(bodyPos.x - 5 * sin(theta), 4.0f, bodyPos.z - 5 * cos(theta)),
 				XMFLOAT3(bodyPos.x, 2.0f, bodyPos.z),
 				XMFLOAT3(0.0f, 1.0f, 0.0f));
 		}
 		else {
-			// 视野旋转，防止开始的差值过大导致的突然旋转
-			cam1st->Pitch(mouseState.y * 0.002f * 1.25f);
-			cam1st->RotateY(mouseState.x * 0.002f * 1.25f);
+			cam1st->Pitch(mouseState.y * 0.0025f * 1.25f);
+			cam1st->RotateY(mouseState.x * 0.0025f * 1.25f);
+			
 			cam1st->SetPosition(bodyPos.x - 5 * sin(theta), 4.0f, bodyPos.z - 5 * cos(theta));
 		}
 	}
 	else if (m_CameraMode == CameraMode::ThirdPerson) {
 		// 第三人称摄像机的操作
 		cam3rd->SetTarget(m_Body.GetPosition());
-
-		// 绕物体旋转
-		cam3rd->RotateX(mouseState.y * 0.002f * 1.25f);
-		cam3rd->RotateY(mouseState.x * 0.002f * 1.25f);
+		
+		cam3rd->RotateX(mouseState.y * 0.0025f * 1.25f);
+		cam3rd->RotateY(mouseState.x * 0.0025f * 1.25f);
 		cam3rd->Approach(-mouseState.scrollWheelValue / 120 * 1.0f);
 	}
 
@@ -189,30 +195,24 @@ void GameApp::UpdateScene() {
 	
 	// 摄像机模式切换
 	if (m_KeyboardTracker.IsKeyPressed(Keyboard::D1) && m_CameraMode != CameraMode::FirstPerson) {
-		if (!cam1st) {
-			cam1st.reset(new FirstPersonCamera);
-			cam1st->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
-			m_pCamera = cam1st;
-		}
+		cam1st.reset(new FirstPersonCamera);
+		cam1st->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
+		m_pCamera = cam1st;
 
 		bodyPos = m_Body.GetPosition();
 		cam1st->LookAt(XMFLOAT3(bodyPos.x - 5 * sin(theta), 4.0f, bodyPos.z - 5 * cos(theta)),
 			XMFLOAT3(bodyPos.x, 2.0f, bodyPos.z),
 			XMFLOAT3(0.0f, 1.0f, 0.0f));
-
 		m_CameraMode = CameraMode::FirstPerson;
 	}
 	else if (m_KeyboardTracker.IsKeyPressed(Keyboard::D2) && m_CameraMode != CameraMode::ThirdPerson) {
-		if (!cam3rd) {
-			cam3rd.reset(new ThirdPersonCamera);
-			cam3rd->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
-			m_pCamera = cam3rd;
-		}
-		XMFLOAT3 target = m_Body.GetPosition();
-		cam3rd->SetTarget(target);
+		cam3rd.reset(new ThirdPersonCamera);
+		cam3rd->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
+		m_pCamera = cam3rd;
+
+		cam3rd->SetTarget(m_Body.GetPosition());
 		cam3rd->SetDistance(8.0f);
 		cam3rd->SetDistanceMinMax(3.0f, 20.0f);
-		
 		m_CameraMode = CameraMode::ThirdPerson;
 	}
 	// 退出程序，这里应向窗口发送销毁信息
