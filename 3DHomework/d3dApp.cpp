@@ -136,9 +136,7 @@ void D3DApp::OnResize() {
 
 LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch (msg) {
-		// WM_SIZE is sent when the user resizes the window.  
 	case WM_SIZE:
-		// Save the new client area dimensions.
 		m_ClientWidth = LOWORD(lParam);
 		m_ClientHeight = HIWORD(lParam);
 		if (m_pd3dDevice) {
@@ -152,50 +150,30 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 				OnResize();
 			}
 			else if (wParam == SIZE_RESTORED) {
-
-				// Restoring from minimized state?
-				if (m_Minimized)
-				{
+				if (m_Minimized) {
 					m_Minimized = false;
 					OnResize();
 				}
-
-				// Restoring from maximized state?
 				else if (m_Maximized) {
 					m_Maximized = false;
 					OnResize();
 				}
-				else if (m_Resizing) {
-					// If user is dragging the resize bars, we do not resize 
-					// the buffers here because as the user continuously 
-					// drags the resize bars, a stream of WM_SIZE messages are
-					// sent to the window, and it would be pointless (and slow)
-					// to resize for each WM_SIZE message received from dragging
-					// the resize bars.  So instead, we reset after the user is 
-					// done resizing the window and releases the resize bars, which 
-					// sends a WM_EXITSIZEMOVE message.
-				}
-				else // API call such as SetWindowPos or m_pSwapChain->SetFullscreenState.
-				{
+				else if (!m_Resizing) {
 					OnResize();
 				}
 			}
 		}
 		return 0;
 
-		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
 	case WM_ENTERSIZEMOVE:
 		m_Resizing = true;
 		return 0;
 
-		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
-		// Here we reset everything based on the new window dimensions.
 	case WM_EXITSIZEMOVE:
 		m_Resizing = false;
 		OnResize();
 		return 0;
 
-		// WM_DESTROY is sent when the window is being destroyed.
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
