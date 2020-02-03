@@ -16,6 +16,7 @@ public:
 		Material material;
 		DirectX::XMMATRIX world;
 		DirectX::XMMATRIX worldInvTranspose;
+		DirectX::XMMATRIX worldViewProj;
 		int isShadow;
 		DirectX::XMFLOAT3 pad1;
 	};
@@ -38,10 +39,6 @@ public:
 		int numPointLight;
 		int numSpotLight;
 		float pad;		// 打包保证16字节对齐
-	};
-
-	struct CBSkyBoxChangesEveryDrawing {
-		DirectX::XMMATRIX worldViewProj;
 	};
 
 	// 一个尽可能小的游戏对象类
@@ -134,7 +131,7 @@ private:
 	ComPtr<ID3D11InputLayout> m_pVertexLayoutSkyBox;		    // 用于SkyBox的顶点输入布局
 
 
-	ComPtr<ID3D11Buffer> m_pConstantBuffers[5];				    // 常量缓冲区
+	ComPtr<ID3D11Buffer> m_pConstantBuffers[4];				    // 常量缓冲区
 
 	Material m_ShadowMat;									    // 阴影材质
 	Material m_WoodCrateMat;									// 木盒材质

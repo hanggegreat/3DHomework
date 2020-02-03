@@ -1,6 +1,7 @@
 #include "LightHelper.hlsli"
 
 Texture2D g_Tex : register(t0);
+TextureCube g_TexCube : register(t1);
 SamplerState g_SamLinear : register(s0);
 
 
@@ -9,6 +10,7 @@ cbuffer CBChangesEveryDrawing : register(b0)
 	Material g_Material;
 	matrix g_World;
 	matrix g_WorldInvTranspose;
+	matrix g_WorldViewProj;
 	int g_IsShadow;
 }
 
@@ -63,7 +65,16 @@ struct VertexPosHTex
     float2 Tex : TEXCOORD;
 };
 
+struct VertexPos
+{
+	float3 PosL : POSITION;
+};
 
+struct VertexPosHL
+{
+	float4 PosH : SV_POSITION;
+	float3 PosL : POSITION;
+};
 
 
 

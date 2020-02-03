@@ -1,7 +1,6 @@
-#include "Sky.hlsli"
+#include "Basic.hlsli"
 
-VertexPosHL VS(VertexPos vIn)
-{
+VertexPosHL VS(VertexPos vIn) {
     VertexPosHL vOut;
     
     // 设置z = w使得z/w = 1(天空盒保持在远平面)

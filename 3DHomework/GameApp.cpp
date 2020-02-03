@@ -94,19 +94,25 @@ void GameApp::UpdateScene(float dt) {
 	static float velocity = 0.0f;
 
 	float frontWheelTheta = 0.0f;
+	
+	if (m_KeyboardTracker.IsKeyPressed(Keyboard::W)) {
+		if (velocity < 2.0f) {
+			velocity += 1.5f;
+		}
+	}
+	if (m_KeyboardTracker.IsKeyPressed(Keyboard::S)) {
+		if (velocity > -2.0f) {
+			velocity -= 1.5f;
+		}
+	}
+
 	if (keyState.IsKeyDown(Keyboard::A)) {
-		theta -= dt;
+		theta += velocity > -0.5f ? -dt: dt;
 		frontWheelTheta -= 0.3f;
 	}
 	if (keyState.IsKeyDown(Keyboard::D)) {
-		theta += dt;
+		theta += velocity > -0.5f ? dt : -dt;
 		frontWheelTheta += 0.3f;
-	}
-	if (m_KeyboardTracker.IsKeyPressed(Keyboard::W)) {
-		velocity = velocity < -0.5f ? 0.0f : 1.5f;
-	}
-	if (m_KeyboardTracker.IsKeyPressed(Keyboard::S)) {
-		velocity = velocity > 0.5f ? 0.0f : -1.5f;
 	}
 
 	frontWheelTheta += theta;
@@ -126,13 +132,13 @@ void GameApp::UpdateScene(float dt) {
 	m_Wheels[0].SetWorldMatrix(
 		XMMatrixRotationZ(XM_PIDIV2)
 		* XMMatrixRotationY(frontWheelTheta)
-		* XMMatrixRotationNormal(XMLoadFloat3(&frontWheelNormal), length)
+		* XMMatrixRotationNormal(XMLoadFloat3(&frontWheelNormal), -length)
 		* XMMatrixTranslation(bodyPos.x + moveX + sin(theta), -0.49f, bodyPos.z + moveZ + cos(theta))
 	);
 	m_Wheels[1].SetWorldMatrix(
 		XMMatrixRotationZ(XM_PIDIV2)
 		* XMMatrixRotationY(theta)
-		* XMMatrixRotationNormal(XMLoadFloat3(&backWheelNormal), length)
+		* XMMatrixRotationNormal(XMLoadFloat3(&backWheelNormal), -length)
 		* XMMatrixTranslation(bodyPos.x + moveX - sin(theta), -0.49f, bodyPos.z + moveZ - cos(theta))
 	);
 
@@ -233,8 +239,8 @@ void GameApp::DrawScene() {
 	// 绘制Direct2D部分
 	if (m_pd2dRenderTarget != nullptr) {
 		m_pd2dRenderTarget->BeginDraw();
-		std::wstring text = L"切换摄像机模式: 1-第一人称 2-第三人称\n"
-			L"W/S/A/D 前进/后退/左平移/右平移   Esc退出\n"
+		std::wstring text = L"切换摄像机模式: 1-第一人称 2-第三人称   Esc退出\n"
+			L"W/S/A/D 前进加速/后退加速/左转/右转\n"
 			L"鼠标移动控制视野 滚轮控制第三人称观察距离\n"
 			L"当前模式: ";
 		if (m_CameraMode == CameraMode::FirstPerson)
@@ -278,7 +284,7 @@ bool GameApp::InitEffect() {
 }
 
 bool GameApp::InitResource() {
-	// ******************
+
 	// 设置常量缓冲区描述
 	D3D11_BUFFER_DESC cbd;
 	ZeroMemory(&cbd, sizeof(cbd));
@@ -294,12 +300,8 @@ bool GameApp::InitResource() {
 	m_pd3dDevice->CreateBuffer(&cbd, nullptr, m_pConstantBuffers[2].GetAddressOf());
 	cbd.ByteWidth = sizeof(CBChangesRarely);
 	m_pd3dDevice->CreateBuffer(&cbd, nullptr, m_pConstantBuffers[3].GetAddressOf());
-	cbd.ByteWidth = sizeof(CBSkyBoxChangesEveryDrawing);
-	m_pd3dDevice->CreateBuffer(&cbd, nullptr, m_pConstantBuffers[4].GetAddressOf());
 	
-	// ******************
 	// 初始化游戏对象
-
 	m_WoodCrateMat.ambient = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
 	m_WoodCrateMat.diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	m_WoodCrateMat.specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 16.0f);
@@ -319,18 +321,16 @@ bool GameApp::InitResource() {
 	m_Body.SetBuffer(m_pd3dDevice.Get(), Geometry::CreateBox(1.5f, 1.5f, 4.0f));
 	m_Body.SetTexture(texture.Get());
 
+	// 初始化车轮
 	m_Wheels[0].SetBuffer(m_pd3dDevice.Get(), Geometry::CreateCylinder(0.5f));
 	m_Wheels[0].SetTexture(texture.Get());
-	m_Wheels[0].SetWorldMatrix(XMMatrixRotationZ(XM_PIDIV2) * XMMatrixTranslation(0.0f, -0.49f, 1.0f));
 
 	m_Wheels[1].SetBuffer(m_pd3dDevice.Get(), Geometry::CreateCylinder(0.5f));
 	m_Wheels[1].SetTexture(texture.Get());
-	m_Wheels[1].SetWorldMatrix(XMMatrixRotationZ(XM_PIDIV2) * XMMatrixTranslation(0.0f, -0.49f, -1.0f));
 	
 	// 初始化地板
 	CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\floor.dds", nullptr, texture.ReleaseAndGetAddressOf());
-	m_Floor.SetBuffer(m_pd3dDevice.Get(),
-		Geometry::CreatePlane(XMFLOAT2(20.0f, 20.0f), XMFLOAT2(5.0f, 5.0f)));
+	m_Floor.SetBuffer(m_pd3dDevice.Get(),Geometry::CreatePlane(XMFLOAT2(20.0f, 20.0f), XMFLOAT2(5.0f, 5.0f)));
 	m_Floor.SetTexture(texture.Get());
 	m_Floor.SetWorldMatrix(XMMatrixTranslation(0.0f, -1.0f, 0.0f));
 	
@@ -396,7 +396,6 @@ bool GameApp::InitResource() {
 	m_pd3dImmediateContext->VSSetConstantBuffers(1, 1, m_pConstantBuffers[1].GetAddressOf());
 	m_pd3dImmediateContext->VSSetConstantBuffers(2, 1, m_pConstantBuffers[2].GetAddressOf());
 	m_pd3dImmediateContext->VSSetConstantBuffers(3, 1, m_pConstantBuffers[3].GetAddressOf());
-	m_pd3dImmediateContext->VSSetConstantBuffers(4, 1, m_pConstantBuffers[4].GetAddressOf());
 
 	m_pd3dImmediateContext->PSSetConstantBuffers(0, 1, m_pConstantBuffers[0].GetAddressOf());
 	m_pd3dImmediateContext->PSSetConstantBuffers(1, 1, m_pConstantBuffers[1].GetAddressOf());
@@ -574,7 +573,7 @@ void GameApp::SkyBox::Draw(ID3D11DeviceContext * deviceContext, GameApp * gameAp
 	// 获取之前已经绑定到渲染管线上的常量缓冲区并进行修改
 	ComPtr<ID3D11Buffer> cBuffer = nullptr;
 	deviceContext->VSGetConstantBuffers(0, 1, cBuffer.GetAddressOf());
-	CBSkyBoxChangesEveryDrawing cbDrawing;
+	CBChangesEveryDrawing cbDrawing;
 
 	// 内部进行转置，这样外部就不需要提前转置了
 	XMMATRIX WVP = XMLoadFloat4x4(&m_worldViewProj);
