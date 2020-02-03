@@ -1,10 +1,4 @@
-//***************************************************************************************
-// Camera.h by X_Jun(MKXJun) (C) 2018-2020 All Rights Reserved.
-// Licensed under the MIT License.
-//
-// 提供第一人称(自由视角)和第三人称摄像机
-// Provide 1st person(free view) and 3rd person cameras.
-//***************************************************************************************
+// 提供第一人称和第三人称摄像机
 
 #ifndef CAMERA_H
 #define CAMERA_H
@@ -12,8 +6,7 @@
 #include <d3d11_1.h>
 #include <DirectXMath.h>
 
-class Camera
-{
+class Camera {
 public:
 	Camera();
 	virtual ~Camera() = 0;
@@ -59,8 +52,7 @@ protected:
 
 };
 
-class FirstPersonCamera : public Camera
-{
+class FirstPersonCamera : public Camera {
 public:
 	FirstPersonCamera();
 	~FirstPersonCamera() override;
@@ -79,8 +71,7 @@ public:
 	void UpdateViewMatrix() override;
 };
 
-class ThirdPersonCamera : public Camera
-{
+class ThirdPersonCamera : public Camera {
 public:
 	ThirdPersonCamera();
 	~ThirdPersonCamera() override;

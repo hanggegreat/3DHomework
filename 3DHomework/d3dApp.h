@@ -11,7 +11,6 @@
 #include <DirectXMath.h>
 #include "Mouse.h"
 #include "Keyboard.h"
-#include "GameTimer.h"
 
 // 添加所有要引用的库
 #pragma comment(lib, "d2d1.lib")
@@ -22,8 +21,7 @@
 #pragma comment(lib, "D3DCompiler.lib")
 #pragma comment(lib, "winmm.lib")
 
-class D3DApp
-{
+class D3DApp {
 public:
 	D3DApp(HINSTANCE hInstance);				// 在构造函数的初始化列表应当设置好初始参数
 	virtual ~D3DApp();
@@ -35,30 +33,25 @@ public:
 
 	virtual bool Init();						// 该父类方法需要初始化窗口、Direct2D和Direct3D部分
 	virtual void OnResize();					// 该父类方法需要在窗口大小变动的时候调用
-	virtual void UpdateScene(float dt) = 0;		// 子类需要实现该方法，完成每一帧的更新
-	virtual void DrawScene() = 0;				// 子类需要实现该方法，完成每一帧的绘制
+	virtual void UpdateScene() = 0;				// 完成每一帧的更新
+	virtual void DrawScene() = 0;				// 完成每一帧的绘制
 	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam); // 窗口的消息回调函数
 
 protected:
 	bool InitMainWindow();						// 窗口初始化
 	bool InitDirect2D();						// Direct2D初始化
 	bool InitDirect3D();						// Direct3D初始化
-	
-	void CalculateFrameStats();					// 计算每秒帧数并在窗口显示
 
 protected:
 
 	HINSTANCE m_hAppInst;						// 应用实例句柄
 	HWND      m_hMainWnd;						// 主窗口句柄
-	bool      m_AppPaused;						// 应用是否暂停
 	bool      m_Minimized;						// 应用是否最小化
 	bool      m_Maximized;						// 应用是否最大化
 	bool      m_Resizing;						// 窗口大小是否变化
 	bool	  m_Enable4xMsaa;					// 是否开启4倍多重采样
 	UINT      m_4xMsaaQuality;					// MSAA支持的质量等级
 	
-	GameTimer m_Timer;							// 计时器
-
 
 	// 使用模板别名(C++11)简化类型名
 	template <class T>

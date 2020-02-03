@@ -16,7 +16,6 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 	m_ClientWidth(800),
 	m_ClientHeight(600),
 	m_hMainWnd(nullptr),
-	m_AppPaused(false),
 	m_Minimized(false),
 	m_Maximized(false),
 	m_Resizing(false),
@@ -53,24 +52,14 @@ float D3DApp::AspectRatio() const {
 int D3DApp::Run() {
 	MSG msg = { 0 };
 
-	m_Timer.Reset();
-
 	while (msg.message != WM_QUIT) {
 		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 		else {
-			m_Timer.Tick();
-
-			if (!m_AppPaused) {
-				CalculateFrameStats();
-				UpdateScene(m_Timer.DeltaTime());
-				DrawScene();
-			}
-			else {
-				Sleep(100);
-			}
+			UpdateScene();
+			DrawScene();
 		}
 	}
 
@@ -147,62 +136,36 @@ void D3DApp::OnResize() {
 
 LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch (msg) {
-		// WM_ACTIVATE is sent when the window is activated or deactivated.  
-		// We pause the game when the window is deactivated and unpause it 
-		// when it becomes active.  
-	case WM_ACTIVATE:
-		if (LOWORD(wParam) == WA_INACTIVE)
-		{
-			m_AppPaused = true;
-			m_Timer.Stop();
-		}
-		else
-		{
-			m_AppPaused = false;
-			m_Timer.Start();
-		}
-		return 0;
-
 		// WM_SIZE is sent when the user resizes the window.  
 	case WM_SIZE:
 		// Save the new client area dimensions.
 		m_ClientWidth = LOWORD(lParam);
 		m_ClientHeight = HIWORD(lParam);
-		if (m_pd3dDevice)
-		{
-			if (wParam == SIZE_MINIMIZED)
-			{
-				m_AppPaused = true;
+		if (m_pd3dDevice) {
+			if (wParam == SIZE_MINIMIZED) {
 				m_Minimized = true;
 				m_Maximized = false;
 			}
-			else if (wParam == SIZE_MAXIMIZED)
-			{
-				m_AppPaused = false;
+			else if (wParam == SIZE_MAXIMIZED) {
 				m_Minimized = false;
 				m_Maximized = true;
 				OnResize();
 			}
-			else if (wParam == SIZE_RESTORED)
-			{
+			else if (wParam == SIZE_RESTORED) {
 
 				// Restoring from minimized state?
 				if (m_Minimized)
 				{
-					m_AppPaused = false;
 					m_Minimized = false;
 					OnResize();
 				}
 
 				// Restoring from maximized state?
-				else if (m_Maximized)
-				{
-					m_AppPaused = false;
+				else if (m_Maximized) {
 					m_Maximized = false;
 					OnResize();
 				}
-				else if (m_Resizing)
-				{
+				else if (m_Resizing) {
 					// If user is dragging the resize bars, we do not resize 
 					// the buffers here because as the user continuously 
 					// drags the resize bars, a stream of WM_SIZE messages are
@@ -222,17 +185,13 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
 	case WM_ENTERSIZEMOVE:
-		m_AppPaused = true;
 		m_Resizing = true;
-		m_Timer.Stop();
 		return 0;
 
 		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
 		// Here we reset everything based on the new window dimensions.
 	case WM_EXITSIZEMOVE:
-		m_AppPaused = false;
 		m_Resizing = false;
-		m_Timer.Start();
 		OnResize();
 		return 0;
 
@@ -289,8 +248,7 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 
-bool D3DApp::InitMainWindow()
-{
+bool D3DApp::InitMainWindow() {
 	WNDCLASS wc;
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = MainWndProc;
@@ -448,31 +406,5 @@ bool D3DApp::InitDirect3D() {
 	return true;
 }
 
-
-
-
-void D3DApp::CalculateFrameStats() {
-	// 该代码计算每秒帧速，并计算每一帧渲染需要的时间，显示在窗口标题
-	static int frameCnt = 0;
-	static float timeElapsed = 0.0f;
-
-	frameCnt++;
-
-	if ((m_Timer.TotalTime() - timeElapsed) >= 1.0f) {
-		float fps = (float)frameCnt; // fps = frameCnt / 1
-		float mspf = 1000.0f / fps;
-
-		std::wostringstream outs;
-		outs.precision(6);
-		outs << m_MainWndCaption << L"    "
-			<< L"FPS: " << fps << L"    "
-			<< L"Frame Time: " << mspf << L" (ms)";
-		SetWindowText(m_hMainWnd, outs.str().c_str());
-
-		// Reset for next average.
-		frameCnt = 0;
-		timeElapsed += 1.0f;
-	}
-}
 
 

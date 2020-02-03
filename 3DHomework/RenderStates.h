@@ -6,12 +6,11 @@
 #include <wrl/client.h>
 #include <d3d11_1.h>
 
+using namespace Microsoft::WRL;
+
 
 class RenderStates {
 public:
-	template <class T>
-	using ComPtr = Microsoft::WRL::ComPtr<T>;
-
 	static void InitAll(ID3D11Device * device);
 
 public:

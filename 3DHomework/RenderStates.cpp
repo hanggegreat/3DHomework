@@ -1,7 +1,4 @@
 #include "RenderStates.h"
-#include "d3dUtil.h"
-
-using namespace Microsoft::WRL;
 
 ComPtr<ID3D11RasterizerState> RenderStates::RSNoCull = nullptr;
 

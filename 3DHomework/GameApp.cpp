@@ -77,7 +77,7 @@ void GameApp::OnResize() {
 	}
 }
 
-void GameApp::UpdateScene(float dt) {
+void GameApp::UpdateScene() {
 	// 更新鼠标事件，获取相对偏移量
 	Mouse::State mouseState = m_pMouse->GetState();
 	Mouse::State lastMouseState = m_MouseTracker.GetLastState();
@@ -92,32 +92,41 @@ void GameApp::UpdateScene(float dt) {
 	static float theta = 0.0f;
 	static float length = 0.0f;
 	static float velocity = 0.0f;
+	static bool needRotate = true;
 
 	float frontWheelTheta = 0.0f;
 	
 	if (m_KeyboardTracker.IsKeyPressed(Keyboard::W)) {
 		if (velocity < 2.0f) {
 			velocity += 1.5f;
+			if (velocity >= 1.0f) {
+				needRotate = true;
+			}
 		}
 	}
 	if (m_KeyboardTracker.IsKeyPressed(Keyboard::S)) {
 		if (velocity > -2.0f) {
 			velocity -= 1.5f;
+			if (velocity <= -1.0f) {
+				needRotate = true;
+			}
 		}
 	}
 
 	if (keyState.IsKeyDown(Keyboard::A)) {
-		theta += velocity > -0.5f ? -dt: dt;
+		theta += velocity > -0.5f ? -0.002f: 0.002f;
 		frontWheelTheta -= 0.3f;
+		needRotate = true;
 	}
 	if (keyState.IsKeyDown(Keyboard::D)) {
-		theta += velocity > -0.5f ? dt : -dt;
+		theta += velocity > -0.5f ? 0.002f : -0.002f;
 		frontWheelTheta += 0.3f;
+		needRotate = true;
 	}
 
 	frontWheelTheta += theta;
 	XMFLOAT3 bodyPos = m_Body.GetPosition();
-	float move = velocity * dt;
+	float move = velocity * 0.002f;
 	float moveX = move * sin(theta);
 	float moveZ = move * cos(theta);
 	XMFLOAT3 frontWheelNormal(-cos(frontWheelTheta), 0.0f, sin(frontWheelTheta));
@@ -144,19 +153,29 @@ void GameApp::UpdateScene(float dt) {
 
 	if (m_CameraMode == CameraMode::FirstPerson) {
 		bodyPos = m_Body.GetPosition();
-		cam1st->SetPosition(bodyPos.x - 4 * sin(theta), 4.0f, bodyPos.z - 4 * cos(theta));
-
-		// 视野旋转，防止开始的差值过大导致的突然旋转
-		cam1st->Pitch(mouseState.y * dt * 1.25f);
-		cam1st->RotateY(mouseState.x * dt * 1.25f);
+		if (fabs(mouseState.y) > 0.01f || fabs(mouseState.x) > 0.01f) {
+			needRotate = false;
+		}
+		
+		if (needRotate) {
+			cam1st->LookAt(XMFLOAT3(bodyPos.x - 5 * sin(theta), 4.0f, bodyPos.z - 5 * cos(theta)),
+				XMFLOAT3(bodyPos.x, 2.0f, bodyPos.z),
+				XMFLOAT3(0.0f, 1.0f, 0.0f));
+		}
+		else {
+			// 视野旋转，防止开始的差值过大导致的突然旋转
+			cam1st->Pitch(mouseState.y * 0.002f * 1.25f);
+			cam1st->RotateY(mouseState.x * 0.002f * 1.25f);
+			cam1st->SetPosition(bodyPos.x - 5 * sin(theta), 4.0f, bodyPos.z - 5 * cos(theta));
+		}
 	}
 	else if (m_CameraMode == CameraMode::ThirdPerson) {
 		// 第三人称摄像机的操作
 		cam3rd->SetTarget(m_Body.GetPosition());
 
 		// 绕物体旋转
-		cam3rd->RotateX(mouseState.y * dt * 1.25f);
-		cam3rd->RotateY(mouseState.x * dt * 1.25f);
+		cam3rd->RotateX(mouseState.y * 0.002f * 1.25f);
+		cam3rd->RotateY(mouseState.x * 0.002f * 1.25f);
 		cam3rd->Approach(-mouseState.scrollWheelValue / 120 * 1.0f);
 	}
 
@@ -177,8 +196,8 @@ void GameApp::UpdateScene(float dt) {
 		}
 
 		bodyPos = m_Body.GetPosition();
-		cam1st->LookAt(XMFLOAT3(bodyPos.x - 3 * sin(theta), 3.0f, bodyPos.z - 3 * cos(theta)),
-			XMFLOAT3(0.0f, 0.0f, 1.0f),
+		cam1st->LookAt(XMFLOAT3(bodyPos.x - 5 * sin(theta), 4.0f, bodyPos.z - 5 * cos(theta)),
+			XMFLOAT3(bodyPos.x, 2.0f, bodyPos.z),
 			XMFLOAT3(0.0f, 1.0f, 0.0f));
 
 		m_CameraMode = CameraMode::FirstPerson;
@@ -330,7 +349,7 @@ bool GameApp::InitResource() {
 	
 	// 初始化地板
 	CreateDDSTextureFromFile(m_pd3dDevice.Get(), L"Texture\\floor.dds", nullptr, texture.ReleaseAndGetAddressOf());
-	m_Floor.SetBuffer(m_pd3dDevice.Get(),Geometry::CreatePlane(XMFLOAT2(20.0f, 20.0f), XMFLOAT2(5.0f, 5.0f)));
+	m_Floor.SetBuffer(m_pd3dDevice.Get(), Geometry::CreatePlane(XMFLOAT2(20.0f, 20.0f), XMFLOAT2(5.0f, 5.0f)));
 	m_Floor.SetTexture(texture.Get());
 	m_Floor.SetWorldMatrix(XMMatrixTranslation(0.0f, -1.0f, 0.0f));
 	
@@ -353,7 +372,7 @@ bool GameApp::InitResource() {
 	auto camera = std::shared_ptr<FirstPersonCamera>(new FirstPersonCamera);
 	m_pCamera = camera;
 	camera->SetViewPort(0.0f, 0.0f, (float)m_ClientWidth, (float)m_ClientHeight);
-	camera->LookAt(XMFLOAT3(0.0f, 4.0f, -4.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f));
+	camera->LookAt(XMFLOAT3(0.0f, 5.0f, -5.0f), XMFLOAT3(0.0f, 2.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f));
 
 	// 初始化仅在窗口大小变动时修改的值
 	m_pCamera->SetFrustum(XM_PI / 3, AspectRatio(), 0.5f, 1000.0f);
@@ -361,20 +380,18 @@ bool GameApp::InitResource() {
 
 	// 初始化不会变化的值
 	// 环境光
-	m_CBRarely.dirLight[0].ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	m_CBRarely.dirLight[0].diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	m_CBRarely.dirLight[0].specular = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	m_CBRarely.dirLight[0].direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
+	m_CBRarely.dirLight.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	m_CBRarely.dirLight.diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	m_CBRarely.dirLight.specular = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	m_CBRarely.dirLight.direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
 	// 灯光
-	m_CBRarely.pointLight[0].position = XMFLOAT3(0.0f, 10.0f, 0.0f);
-	m_CBRarely.pointLight[0].ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	m_CBRarely.pointLight[0].diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	m_CBRarely.pointLight[0].specular = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	m_CBRarely.pointLight[0].att = XMFLOAT3(0.0f, 0.1f, 0.0f);
-	m_CBRarely.pointLight[0].range = 25.0f;
-	m_CBRarely.numDirLight = 1;
-	m_CBRarely.numPointLight = 1;
-	m_CBRarely.numSpotLight = 0;
+	m_CBRarely.pointLight.position = XMFLOAT3(0.0f, 10.0f, 0.0f);
+	m_CBRarely.pointLight.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	m_CBRarely.pointLight.diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	m_CBRarely.pointLight.specular = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	m_CBRarely.pointLight.att = XMFLOAT3(0.0f, 0.1f, 0.0f);
+	m_CBRarely.pointLight.range = 25.0f;
+
 	m_CBRarely.shadow = XMMatrixTranspose(XMMatrixShadow(XMVectorSet(0.0f, 1.0f, 0.0f, 0.99f), XMVectorSet(0.0f, 10.0f, -10.0f, 1.0f)));
 
 	// 更新不容易被修改的常量缓冲区资源

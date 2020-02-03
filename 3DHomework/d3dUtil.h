@@ -21,5 +21,4 @@ HRESULT CreateShaderFromFile(
 	ID3DBlob** ppBlobOut);
 
 
-
 #endif

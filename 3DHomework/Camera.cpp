@@ -6,41 +6,33 @@ Camera::Camera()
 	m_Up(0.0f, 0.0f, 0.0f), m_Look(0.0f, 0.0f, 0.0f),
 	m_NearZ(), m_FarZ(), m_FovY(), m_Aspect(),
 	m_NearWindowHeight(), m_FarWindowHeight(),
-	m_View(), m_Proj(), m_ViewPort()
-{
+	m_View(), m_Proj(), m_ViewPort() {
 }
 
-Camera::~Camera()
-{
+Camera::~Camera() {
 }
 
-DirectX::XMVECTOR Camera::GetPositionXM() const
-{
+DirectX::XMVECTOR Camera::GetPositionXM() const {
 	return XMLoadFloat3(&m_Position);
 }
 
-DirectX::XMFLOAT3 Camera::GetPosition() const
-{
+DirectX::XMFLOAT3 Camera::GetPosition() const {
 	return m_Position;
 }
 
-DirectX::XMMATRIX Camera::GetViewXM() const
-{
+DirectX::XMMATRIX Camera::GetViewXM() const {
 	return XMLoadFloat4x4(&m_View);
 }
 
-DirectX::XMMATRIX Camera::GetProjXM() const
-{
+DirectX::XMMATRIX Camera::GetProjXM() const {
 	return XMLoadFloat4x4(&m_Proj);
 }
 
-DirectX::XMMATRIX Camera::GetViewProjXM() const
-{
+DirectX::XMMATRIX Camera::GetViewProjXM() const {
 	return XMLoadFloat4x4(&m_View) * XMLoadFloat4x4(&m_Proj);
 }
 
-void Camera::SetFrustum(float fovY, float aspect, float nearZ, float farZ)
-{
+void Camera::SetFrustum(float fovY, float aspect, float nearZ, float farZ) {
 	m_FovY = fovY;
 	m_Aspect = aspect;
 	m_NearZ = nearZ;
@@ -52,8 +44,7 @@ void Camera::SetFrustum(float fovY, float aspect, float nearZ, float farZ)
 	XMStoreFloat4x4(&m_Proj, XMMatrixPerspectiveFovLH(m_FovY, m_Aspect, m_NearZ, m_FarZ));
 }
 
-void Camera::SetViewPort(float topLeftX, float topLeftY, float width, float height, float minDepth, float maxDepth)
-{
+void Camera::SetViewPort(float topLeftX, float topLeftY, float width, float height, float minDepth, float maxDepth) {
 	m_ViewPort.TopLeftX = topLeftX;
 	m_ViewPort.TopLeftY = topLeftY;
 	m_ViewPort.Width = width;
@@ -65,21 +56,17 @@ void Camera::SetViewPort(float topLeftX, float topLeftY, float width, float heig
 
 // 第一人称摄像机
 FirstPersonCamera::FirstPersonCamera()
-	: Camera()
-{
+	: Camera() {
 }
 
-FirstPersonCamera::~FirstPersonCamera()
-{
+FirstPersonCamera::~FirstPersonCamera() {
 }
 
-void FirstPersonCamera::SetPosition(float x, float y, float z)
-{
+void FirstPersonCamera::SetPosition(float x, float y, float z) {
 	m_Position = XMFLOAT3(x, y, z);
 }
 
-void XM_CALLCONV FirstPersonCamera::LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR up)
-{
+void XM_CALLCONV FirstPersonCamera::LookAt(DirectX::FXMVECTOR pos, DirectX::FXMVECTOR target, DirectX::FXMVECTOR up) {
 	XMVECTOR L = XMVector3Normalize(target - pos);
 	XMVECTOR R = XMVector3Normalize(XMVector3Cross(up, L));
 	XMVECTOR U = XMVector3Cross(L, R);
@@ -90,13 +77,11 @@ void XM_CALLCONV FirstPersonCamera::LookAt(DirectX::FXMVECTOR pos, DirectX::FXMV
 	XMStoreFloat3(&m_Up, U);
 }
 
-void FirstPersonCamera::LookAt(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & target,const DirectX::XMFLOAT3 & up)
-{
+void FirstPersonCamera::LookAt(const DirectX::XMFLOAT3 & pos, const DirectX::XMFLOAT3 & target,const DirectX::XMFLOAT3 & up) {
 	LookAt(XMLoadFloat3(&pos), XMLoadFloat3(&target), XMLoadFloat3(&up));
 }
 
-void FirstPersonCamera::Pitch(float rad)
-{
+void FirstPersonCamera::Pitch(float rad) {
 	XMMATRIX R = XMMatrixRotationAxis(XMLoadFloat3(&m_Right), rad);
 	XMVECTOR Up = XMVector3TransformNormal(XMLoadFloat3(&m_Up), R);
 	XMVECTOR Look = XMVector3TransformNormal(XMLoadFloat3(&m_Look), R);
@@ -110,8 +95,7 @@ void FirstPersonCamera::Pitch(float rad)
 	XMStoreFloat3(&m_Look, Look);
 }
 
-void FirstPersonCamera::RotateY(float rad)
-{
+void FirstPersonCamera::RotateY(float rad) {
 	XMMATRIX R = XMMatrixRotationY(rad);
 
 	XMStoreFloat3(&m_Right, XMVector3TransformNormal(XMLoadFloat3(&m_Right), R));
@@ -119,8 +103,7 @@ void FirstPersonCamera::RotateY(float rad)
 	XMStoreFloat3(&m_Look, XMVector3TransformNormal(XMLoadFloat3(&m_Look), R));
 }
 
-void FirstPersonCamera::UpdateViewMatrix()
-{
+void FirstPersonCamera::UpdateViewMatrix() {
 	XMVECTOR R = XMLoadFloat3(&m_Right);
 	XMVECTOR U = XMLoadFloat3(&m_Up);
 	XMVECTOR L = XMLoadFloat3(&m_Look);
@@ -152,16 +135,13 @@ void FirstPersonCamera::UpdateViewMatrix()
 
 // 第三人称摄像机
 ThirdPersonCamera::ThirdPersonCamera()
-	: Camera(), m_Target(), m_Distance(), m_MinDist(), m_MaxDist(), m_Theta(-XM_PIDIV2), m_Phi()
-{
+	: Camera(), m_Target(), m_Distance(), m_MinDist(), m_MaxDist(), m_Theta(-XM_PIDIV2), m_Phi() {
 }
 
-ThirdPersonCamera::~ThirdPersonCamera()
-{
+ThirdPersonCamera::~ThirdPersonCamera() {
 }
 
-void ThirdPersonCamera::RotateX(float rad)
-{
+void ThirdPersonCamera::RotateX(float rad) {
 	m_Phi -= rad;
 	// 将上下视野角度Phi限制在[pi/6, pi/2]，
 	// 即余弦值[0, cos(pi/6)]之间
@@ -171,13 +151,11 @@ void ThirdPersonCamera::RotateX(float rad)
 		m_Phi = XM_PIDIV2;
 }
 
-void ThirdPersonCamera::RotateY(float rad)
-{
+void ThirdPersonCamera::RotateY(float rad) {
 	m_Theta = XMScalarModAngle(m_Theta - rad);
 }
 
-void ThirdPersonCamera::Approach(float dist)
-{
+void ThirdPersonCamera::Approach(float dist) {
 	m_Distance += dist;
 	// 限制距离在[m_MinDist, m_MaxDist]之间
 	if (m_Distance < m_MinDist)
@@ -186,8 +164,7 @@ void ThirdPersonCamera::Approach(float dist)
 		m_Distance = m_MaxDist;
 }
 
-void ThirdPersonCamera::SetRotationX(float phi)
-{
+void ThirdPersonCamera::SetRotationX(float phi) {
 	m_Phi = XMScalarModAngle(phi);
 	// 将上下视野角度Phi限制在[pi/6, pi/2]，
 	// 即余弦值[0, cos(pi/6)]之间
@@ -197,29 +174,24 @@ void ThirdPersonCamera::SetRotationX(float phi)
 		m_Phi = XM_PIDIV2;
 }
 
-void ThirdPersonCamera::SetRotationY(float theta)
-{
+void ThirdPersonCamera::SetRotationY(float theta) {
 	m_Theta = XMScalarModAngle(theta);
 }
 
-void ThirdPersonCamera::SetTarget(const DirectX::XMFLOAT3 & target)
-{
+void ThirdPersonCamera::SetTarget(const DirectX::XMFLOAT3 & target) {
 	m_Target = target;
 }
 
-void ThirdPersonCamera::SetDistance(float dist)
-{
+void ThirdPersonCamera::SetDistance(float dist) {
 	m_Distance = dist;
 }
 
-void ThirdPersonCamera::SetDistanceMinMax(float minDist, float maxDist)
-{
+void ThirdPersonCamera::SetDistanceMinMax(float minDist, float maxDist) {
 	m_MinDist = minDist;
 	m_MaxDist = maxDist;
 }
 
-void ThirdPersonCamera::UpdateViewMatrix()
-{
+void ThirdPersonCamera::UpdateViewMatrix() {
 	// 球面坐标系
 	float x = m_Target.x + m_Distance * sinf(m_Phi) * cosf(m_Theta);
 	float z = m_Target.z + m_Distance * sinf(m_Phi) * sinf(m_Theta);

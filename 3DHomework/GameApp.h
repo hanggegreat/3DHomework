@@ -32,13 +32,9 @@ public:
 
 	struct CBChangesRarely {
 		DirectX::XMMATRIX shadow;
-		DirectionalLight dirLight[10];
-		PointLight pointLight[10];
-		SpotLight spotLight[10];
-		int numDirLight;
-		int numPointLight;
-		int numSpotLight;
-		float pad;		// 打包保证16字节对齐
+		DirectionalLight dirLight;
+		PointLight pointLight;
+		SpotLight spotLight;
 	};
 
 	// 一个尽可能小的游戏对象类
@@ -110,7 +106,7 @@ public:
 
 	bool Init();
 	void OnResize();
-	void UpdateScene(float dt);
+	void UpdateScene();
 	void DrawScene();
 
 private:
