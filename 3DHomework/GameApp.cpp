@@ -77,7 +77,7 @@ void GameApp::OnResize() {
 	}
 }
 
-void GameApp::UpdateScene() {
+void GameApp::UpdateScene(float dt) {
 	// 更新鼠标事件，获取相对偏移量
 	Mouse::State mouseState = m_pMouse->GetState();
 	Mouse::State lastMouseState = m_MouseTracker.GetLastState();
@@ -117,19 +117,19 @@ void GameApp::UpdateScene() {
 		}
 	}
 	if (keyState.IsKeyDown(Keyboard::A)) {
-		theta += velocity > -0.5f ? -0.0025f: 0.0025f;
+		theta += velocity > -0.5f ? -dt: dt;
 		frontWheelTheta -= 0.3f;
 		needRotate = true;
 	}
 	if (keyState.IsKeyDown(Keyboard::D)) {
-		theta += velocity > -0.5f ? 0.0025f : -0.0025f;
+		theta += velocity > -0.5f ? dt : -dt;
 		frontWheelTheta += 0.3f;
 		needRotate = true;
 	}
 
 	frontWheelTheta += theta;
 	XMFLOAT3 bodyPos = m_Body.GetPosition();
-	float move = velocity * 0.0025f;
+	float move = velocity * dt;
 	float moveX = move * sin(theta);
 	float moveZ = move * cos(theta);
 
@@ -170,8 +170,8 @@ void GameApp::UpdateScene() {
 				XMFLOAT3(0.0f, 1.0f, 0.0f));
 		}
 		else {
-			cam1st->Pitch(mouseState.y * 0.0025f * 1.25f);
-			cam1st->RotateY(mouseState.x * 0.0025f * 1.25f);
+			cam1st->Pitch(mouseState.y * dt);
+			cam1st->RotateY(mouseState.x * dt);
 			
 			cam1st->SetPosition(bodyPos.x - 5 * sin(theta), 4.0f, bodyPos.z - 5 * cos(theta));
 		}
@@ -180,8 +180,8 @@ void GameApp::UpdateScene() {
 		// 第三人称摄像机的操作
 		cam3rd->SetTarget(m_Body.GetPosition());
 		
-		cam3rd->RotateX(mouseState.y * 0.0025f * 1.25f);
-		cam3rd->RotateY(mouseState.x * 0.0025f * 1.25f);
+		cam3rd->RotateX(mouseState.y * dt * 1.25f);
+		cam3rd->RotateY(mouseState.x * dt * 1.25f);
 		cam3rd->Approach(-mouseState.scrollWheelValue / 120 * 1.0f);
 	}
 

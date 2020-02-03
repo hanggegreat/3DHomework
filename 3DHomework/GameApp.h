@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include "RenderStates.h"
 
+
 class GameApp : public D3DApp {
 public:
 
@@ -106,7 +107,7 @@ public:
 
 	bool Init();
 	void OnResize();
-	void UpdateScene();
+	void UpdateScene(float dt);
 	void DrawScene();
 
 private:

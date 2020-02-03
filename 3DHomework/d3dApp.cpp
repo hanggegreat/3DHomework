@@ -52,14 +52,26 @@ float D3DApp::AspectRatio() const {
 int D3DApp::Run() {
 	MSG msg = { 0 };
 
+	m_Timer.Reset();
+
 	while (msg.message != WM_QUIT) {
 		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 		else {
-			UpdateScene();
-			DrawScene();
+			m_Timer.Tick();
+
+			if (!m_AppPaused)
+			{
+				CalculateFrameStats();
+				UpdateScene(m_Timer.DeltaTime());
+				DrawScene();
+			}
+			else
+			{
+				Sleep(100);
+			}
 		}
 	}
 
@@ -136,25 +148,42 @@ void D3DApp::OnResize() {
 
 LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch (msg) {
+	case WM_ACTIVATE:
+		if (LOWORD(wParam) == WA_INACTIVE)
+		{
+			m_AppPaused = true;
+			m_Timer.Stop();
+		}
+		else
+		{
+			m_AppPaused = false;
+			m_Timer.Start();
+		}
+		return 0;
+
 	case WM_SIZE:
 		m_ClientWidth = LOWORD(lParam);
 		m_ClientHeight = HIWORD(lParam);
 		if (m_pd3dDevice) {
 			if (wParam == SIZE_MINIMIZED) {
+				m_AppPaused = true;
 				m_Minimized = true;
 				m_Maximized = false;
 			}
 			else if (wParam == SIZE_MAXIMIZED) {
+				m_AppPaused = false;
 				m_Minimized = false;
 				m_Maximized = true;
 				OnResize();
 			}
 			else if (wParam == SIZE_RESTORED) {
 				if (m_Minimized) {
+					m_AppPaused = false;
 					m_Minimized = false;
 					OnResize();
 				}
 				else if (m_Maximized) {
+					m_AppPaused = false;
 					m_Maximized = false;
 					OnResize();
 				}
@@ -166,11 +195,15 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 		return 0;
 
 	case WM_ENTERSIZEMOVE:
+		m_AppPaused = true;
 		m_Resizing = true;
+		m_Timer.Stop();
 		return 0;
 
 	case WM_EXITSIZEMOVE:
+		m_AppPaused = false;
 		m_Resizing = false;
+		m_Timer.Start();
 		OnResize();
 		return 0;
 
@@ -384,5 +417,32 @@ bool D3DApp::InitDirect3D() {
 	return true;
 }
 
+
+
+void D3DApp::CalculateFrameStats()
+{
+	// 该代码计算每秒帧速，并计算每一帧渲染需要的时间，显示在窗口标题
+	static int frameCnt = 0;
+	static float timeElapsed = 0.0f;
+
+	frameCnt++;
+
+	if ((m_Timer.TotalTime() - timeElapsed) >= 1.0f)
+	{
+		float fps = (float)frameCnt; // fps = frameCnt / 1
+		float mspf = 1000.0f / fps;
+
+		std::wostringstream outs;
+		outs.precision(6);
+		outs << m_MainWndCaption << L"    "
+			<< L"FPS: " << fps << L"    "
+			<< L"Frame Time: " << mspf << L" (ms)";
+		SetWindowText(m_hMainWnd, outs.str().c_str());
+
+		// Reset for next average.
+		frameCnt = 0;
+		timeElapsed += 1.0f;
+	}
+}
 
 
