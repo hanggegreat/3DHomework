@@ -241,6 +241,7 @@ void GameApp::DrawScene() {
 	for (auto& wall : m_Walls)
 		wall.Draw(m_pd3dImmediateContext.Get(), this);
 
+	// 绘制小车的阴影
 	m_Body.SetShadowState(true);
 	m_Wheels[0].SetShadowState(true);
 	m_Wheels[1].SetShadowState(true);
@@ -253,14 +254,17 @@ void GameApp::DrawScene() {
 	m_Wheels[0].SetShadowState(false);
 	m_Wheels[1].SetShadowState(false);
 	
+	// 绘制天空盒
 	m_SkyBox.Draw(m_pd3dImmediateContext.Get(), this, *m_pCamera);
 
 	// 绘制Direct2D部分
 	if (m_pd2dRenderTarget != nullptr) {
 		m_pd2dRenderTarget->BeginDraw();
 		std::wstring text = L"切换摄像机模式: 1-第一人称 2-第三人称   Esc退出\n"
-			L"W/S/A/D 前进加速/后退加速/左转/右转\n"
-			L"鼠标移动控制视野 滚轮控制第三人称观察距离\n"
+			L"W: 前进加速，后退减速\n"
+			L"S: 后退加速，前进减速\n"
+			L"A: 左转\n"
+			L"D: 右转\n"
 			L"当前模式: ";
 		if (m_CameraMode == CameraMode::FirstPerson)
 			text += L"第一人称";
